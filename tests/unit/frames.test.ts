@@ -190,6 +190,52 @@ describe("captions read correctly", () => {
       /^The run ends: stopped by loop detection, after /,
     );
   });
+  it("rarer frames read correctly too", () => {
+    expect(
+      agentsCaption({
+        phase: "error",
+        agent: "sub1",
+        turn: 2,
+        detail: "x",
+        totals: {},
+      }),
+    ).toBe("Sub-agent 1, turn 2: x.");
+    expect(
+      recoveryCaption({
+        type: "error",
+        kind: "malformed",
+        turn: 3,
+        detail: "bad JSON",
+      }),
+    ).toBe("Turn 3: bad JSON.");
+    expect(
+      harnessCaption(
+        [
+          {
+            label: "A",
+            f: {
+              name: "run_shell",
+              subject: "rm -rf build",
+              outcome: "blocked",
+              decision: "allow",
+            },
+          },
+          {
+            label: "B",
+            f: {
+              name: "run_shell",
+              subject: "rm -rf build",
+              outcome: "denied",
+              decision: "deny",
+            },
+          },
+        ],
+        0,
+      ),
+    ).toBe(
+      "Call 1, run_shell(rm -rf build): A a hook blocks it; B refuses it.",
+    );
+  });
   it("unknown phases have no caption", () => {
     expect(agentsCaption({ phase: "x", totals: {} })).toBe("");
     expect(pipelineCaption({ stage: "x" })).toBe("");
