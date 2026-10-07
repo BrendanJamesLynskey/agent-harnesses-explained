@@ -1,0 +1,373 @@
+{
+ "loop": {
+  "scripted": {
+   "scenario": "fix_test",
+   "policy": {
+    "latency": "local-i7",
+    "cache": {
+     "price": "local"
+    }
+   }
+  },
+  "qwen-fix-test-native": {
+   "trace": "qwen-fix-test-native"
+  },
+  "qwen-fix-test-react": {
+   "trace": "qwen-fix-test-react"
+  },
+  "qwen-lookup-native": {
+   "trace": "qwen-lookup-native"
+  }
+ },
+ "toolcall": {
+  "native": {
+   "scenario": "fix_test_malformed"
+  },
+  "react": {
+   "scenario": "fix_test_malformed",
+   "policy": {
+    "style": "react"
+   }
+  },
+  "native_clean": {
+   "scenario": "fix_test"
+  },
+  "react_clean": {
+   "scenario": "fix_test",
+   "policy": {
+    "style": "react"
+   }
+  }
+ },
+ "budget": {
+  "w3000-none": {
+   "scenario": "research",
+   "policy": {
+    "context": {
+     "window": 3000,
+     "strategy": "none"
+    }
+   }
+  },
+  "w3000-truncate": {
+   "scenario": "research",
+   "policy": {
+    "context": {
+     "window": 3000,
+     "strategy": "truncate"
+    }
+   }
+  },
+  "w3000-clip": {
+   "scenario": "research",
+   "policy": {
+    "context": {
+     "window": 3000,
+     "strategy": "clip"
+    }
+   }
+  },
+  "w3000-summarise": {
+   "scenario": "research",
+   "policy": {
+    "context": {
+     "window": 3000,
+     "strategy": "summarise"
+    }
+   }
+  },
+  "w4000-none": {
+   "scenario": "research",
+   "policy": {
+    "context": {
+     "window": 4000,
+     "strategy": "none"
+    }
+   }
+  },
+  "w4000-truncate": {
+   "scenario": "research",
+   "policy": {
+    "context": {
+     "window": 4000,
+     "strategy": "truncate"
+    }
+   }
+  },
+  "w4000-clip": {
+   "scenario": "research",
+   "policy": {
+    "context": {
+     "window": 4000,
+     "strategy": "clip"
+    }
+   }
+  },
+  "w4000-summarise": {
+   "scenario": "research",
+   "policy": {
+    "context": {
+     "window": 4000,
+     "strategy": "summarise"
+    }
+   }
+  }
+ },
+ "cache": {
+  "stable-claude-sonnet-4.6": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "stable",
+     "price": "claude-sonnet-4.6"
+    }
+   }
+  },
+  "stable-claude-haiku-4.5": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "stable",
+     "price": "claude-haiku-4.5"
+    }
+   }
+  },
+  "stable-gpt-5-mini": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "stable",
+     "price": "gpt-5-mini"
+    }
+   }
+  },
+  "timestamp-claude-sonnet-4.6": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "timestamp",
+     "price": "claude-sonnet-4.6"
+    }
+   }
+  },
+  "timestamp-claude-haiku-4.5": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "timestamp",
+     "price": "claude-haiku-4.5"
+    }
+   }
+  },
+  "timestamp-gpt-5-mini": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "timestamp",
+     "price": "gpt-5-mini"
+    }
+   }
+  },
+  "reorder_tools-claude-sonnet-4.6": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "reorder_tools",
+     "price": "claude-sonnet-4.6"
+    }
+   }
+  },
+  "reorder_tools-claude-haiku-4.5": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "reorder_tools",
+     "price": "claude-haiku-4.5"
+    }
+   }
+  },
+  "reorder_tools-gpt-5-mini": {
+   "scenario": "research",
+   "policy": {
+    "cache": {
+     "layout": "reorder_tools",
+     "price": "gpt-5-mini"
+    }
+   }
+  }
+ },
+ "permissions": {
+  "auto-rule": {
+   "scenario": "fix_test_cleanup",
+   "policy": {
+    "permissions": {
+     "mode": "auto",
+     "rules": [
+      {
+       "tool": "run_shell",
+       "pattern": "rm *",
+       "decision": "deny"
+      },
+      {
+       "tool": "run_shell",
+       "pattern": "pytest*",
+       "decision": "allow"
+      }
+     ],
+     "human": {
+      "latency_ms": [
+       3000,
+       9000
+      ],
+      "deny": []
+     }
+    }
+   }
+  },
+  "auto-norule": {
+   "scenario": "fix_test_cleanup",
+   "policy": {
+    "permissions": {
+     "mode": "auto",
+     "rules": [],
+     "human": {
+      "latency_ms": [
+       3000,
+       9000
+      ],
+      "deny": []
+     }
+    }
+   }
+  },
+  "default-rule": {
+   "scenario": "fix_test_cleanup",
+   "policy": {
+    "permissions": {
+     "mode": "default",
+     "rules": [
+      {
+       "tool": "run_shell",
+       "pattern": "rm *",
+       "decision": "deny"
+      },
+      {
+       "tool": "run_shell",
+       "pattern": "pytest*",
+       "decision": "allow"
+      }
+     ],
+     "human": {
+      "latency_ms": [
+       3000,
+       9000
+      ],
+      "deny": []
+     }
+    }
+   }
+  },
+  "default-norule": {
+   "scenario": "fix_test_cleanup",
+   "policy": {
+    "permissions": {
+     "mode": "default",
+     "rules": [],
+     "human": {
+      "latency_ms": [
+       3000,
+       9000
+      ],
+      "deny": []
+     }
+    }
+   }
+  },
+  "ask-rule": {
+   "scenario": "fix_test_cleanup",
+   "policy": {
+    "permissions": {
+     "mode": "ask",
+     "rules": [
+      {
+       "tool": "run_shell",
+       "pattern": "rm *",
+       "decision": "deny"
+      },
+      {
+       "tool": "run_shell",
+       "pattern": "pytest*",
+       "decision": "allow"
+      }
+     ],
+     "human": {
+      "latency_ms": [
+       3000,
+       9000
+      ],
+      "deny": []
+     }
+    }
+   }
+  },
+  "ask-norule": {
+   "scenario": "fix_test_cleanup",
+   "policy": {
+    "permissions": {
+     "mode": "ask",
+     "rules": [],
+     "human": {
+      "latency_ms": [
+       3000,
+       9000
+      ],
+      "deny": []
+     }
+    }
+   }
+  },
+  "read_only-rule": {
+   "scenario": "fix_test_cleanup",
+   "policy": {
+    "permissions": {
+     "mode": "read_only",
+     "rules": [
+      {
+       "tool": "run_shell",
+       "pattern": "rm *",
+       "decision": "deny"
+      },
+      {
+       "tool": "run_shell",
+       "pattern": "pytest*",
+       "decision": "allow"
+      }
+     ],
+     "human": {
+      "latency_ms": [
+       3000,
+       9000
+      ],
+      "deny": []
+     }
+    }
+   }
+  },
+  "read_only-norule": {
+   "scenario": "fix_test_cleanup",
+   "policy": {
+    "permissions": {
+     "mode": "read_only",
+     "rules": [],
+     "human": {
+      "latency_ms": [
+       3000,
+       9000
+      ],
+      "deny": []
+     }
+    }
+   }
+  }
+ }
+}

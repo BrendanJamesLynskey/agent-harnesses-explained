@@ -1,0 +1,70 @@
+<BudgetWidget>
+  <Eq
+    label="The harness compacts when the next prompt plus the tokens reserved for the answer would pass a fraction theta of the window"
+    tex="\text{compact if}\quad \htmlClass{hl-window}{C_t} + \htmlClass{hl-reserve}{R} > \htmlClass{hl-trigger}{\theta}\, W"
+  />
+</BudgetWidget>
+
+<Layer kind="concept">
+
+Everything the model reads shares one window: the system prompt, the tool definitions, the task, the model's own messages and every tool result. The window also has to leave room for the answer. In the animation the harness keeps <V of="policy.max_output" fmt="int" /> tokens free for the answer, and compacts when the next prompt would pass <V of="policy.context.trigger" fmt="pct" /> of the window.
+
+The task reads four design notes, each a few hundred tokens of mostly background with a few facts the answer needs (★). With a 3,000-token window and **no** strategy, the run stops at turn <V of="budget.w3000-none.turns" fmt="int" />: the prompt no longer fits. The three strategies keep it going, and lose different things:
+
+- **Truncate** drops the oldest messages until the prompt is back under <V of="policy.context.target" fmt="pct" /> of the window. It is cheap and blind: here it threw away <V of="budget.w3000-truncate.facts_lost_list" fmt="raw" />, the two notes read first, every number the answer needs.
+- **Clip** cuts old tool results to their first <V of="policy.context.clip_lines" fmt="int" /> lines and keeps a marker of what was cut. A fact near the top of a note survives; one further down does not: it lost <V of="budget.w3000-clip.facts_lost_list" fmt="raw" />.
+- **Summarise** asks the model to write a summary of the older messages and replaces them with it. Here the summariser keeps every fact marked important, and nothing needed was lost. It is not free: each summary is another model call that reads everything it replaces, so the run cost <V of="budget.w3000-summarise.cost" fmt="usd" /> against <V of="budget.w3000-truncate.cost" fmt="usd" /> for truncation.
+
+With a 4,000-token window, compaction fires once, at the end. Summarising then loses only facts nobody needed (the meeting day and an old revision note).
+
+</Layer>
+
+<Callout kind="illustrative">
+
+The windows here are tiny on purpose, so a short task fills them; real models have windows of tens or hundreds of thousands of tokens and real tasks fill those. The summariser is **scripted**: it keeps exactly the facts the scenario marks important. A real summariser decides for itself, and can drop a fact that matters. "Lost" here means no message left in the context contains the fact's sentence.
+
+</Callout>
+
+<Layer kind="maths">
+
+With window $W$, reserve $R$ for the answer and trigger fraction $\theta$, the harness compacts before turn $t$ when $C_t + R > \theta W$. Truncation then removes the oldest messages $m_1, m_2, \dots$ until
+
+$$
+C_t - \sum_{j \le k} |m_j| + R \le \tau W ,
+$$
+
+with the target $\tau$ = <V of="policy.context.target" fmt="num" /> here. Summarising replaces messages $m_1 \dots m_k$ by a summary $s$, for the price of one more model call that reads them all:
+
+$$
+\text{saved per later call} = \sum_{j \le k} |m_j| - |s|, \qquad \text{cost now} = |\text{instruction}| + \sum_{j \le k} |m_j| + |s|_{\text{out}} .
+$$
+
+It pays when enough later calls re-read the saving; and it is the only one of the three that can keep a fact from a dropped message.
+
+</Layer>
+
+<Layer kind="code">
+
+The trigger, cut from the vendored engine ([`harness.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/harness.ts)):
+
+```ts
+const before = this.promptTokens(system, toolNames, msgs, turn);
+if (strategy === "none" || before + reserve <= ctx.trigger * window)
+  return msgs;
+const target = ctx.target * window;
+const keep = ctx.keep_last as number;
+```
+
+</Layer>
+
+## What the public harnesses do
+
+Claude Code compacts automatically: it "summarizes conversation history when approaching context limits", accepts instructions on what to keep (`/compact Focus on code samples and API usage`), and counts its own compactions and clearing of old tool results as expected cache rebuilds, because rewriting the history changes the prompt prefix ([Claude Code, manage costs](https://code.claude.com/docs/en/costs), accessed 2026-10-07). The same page notes that `/compact` "reads the conversation it summarizes, so compacting a large context is itself a large request", the cost in the second equation above. Clipping tool output before it reaches the model is the other lever: the same page shows a hook that filters test output down to the failures.
+
+<Callout kind="deeper">
+
+- Coding agents series: [Why Long Contexts Hurt](https://brendanjameslynskey.github.io/CodingAgents_06_Raschka_Context_Bloat_And_Memory/#slide-01), [Clipping Tool Outputs](https://brendanjameslynskey.github.io/CodingAgents_06_Raschka_Context_Bloat_And_Memory/#slide-02), [Transcript Summarisation](https://brendanjameslynskey.github.io/CodingAgents_06_Raschka_Context_Bloat_And_Memory/#slide-03) and [Where Compaction Bites Back](https://brendanjameslynskey.github.io/CodingAgents_06_Raschka_Context_Bloat_And_Memory/#slide-09); [Load, Summarise, Forget](https://brendanjameslynskey.github.io/CodingAgents_02_Edit_Strategies/#slide-04).
+- Agents series: [How Agents Remember](https://brendanjameslynskey.github.io/LLM_Agents_guide/#memory).
+- Retrieval instead of reading everything: the [RAG and retrieval hub](https://brendanjameslynskey.github.io/LLM_Hub_RAG_Retrieval/).
+
+</Callout>

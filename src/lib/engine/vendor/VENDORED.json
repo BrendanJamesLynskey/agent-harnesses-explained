@@ -1,0 +1,83 @@
+{
+  "repository": "https://github.com/BrendanJamesLynskey/Agent_Loop_Sim",
+  "commit": "b1b31b65f7c70a62b64dafaed6e5a0068cc15766",
+  "committed": "2026-10-07T14:59:47+01:00",
+  "files": {
+    "src/lib/engine/vendor/accounting.ts": {
+      "from": "ts/src/accounting.ts",
+      "sha256": "8c9718072f4256292d8636c0d5dd6e7183361dda5b79d714257eb3a13e321a02"
+    },
+    "src/lib/engine/vendor/chat.ts": {
+      "from": "ts/src/chat.ts",
+      "sha256": "be6b7d5f4b63d80d431f08714c11d62470d9f42a23c599bec032e224f801ee3e"
+    },
+    "src/lib/engine/vendor/data.ts": {
+      "from": "ts/src/data.ts",
+      "sha256": "65f43d25809dc3c7538b79021af154245b2c2e00a88ecda3b775423436cb75b4"
+    },
+    "src/lib/engine/vendor/engine_data.json": {
+      "from": "ts/src/engine_data.json",
+      "sha256": "2da488c4bd75a19fcac336e6da860882e4d00adabff18fc8dc1d5f81a5b11290"
+    },
+    "src/lib/engine/vendor/harness.ts": {
+      "from": "ts/src/harness.ts",
+      "sha256": "7c0bc14fbb69c5ae294104c7183a4a2a2f21a3d9727ce099d34202c52d0fd577"
+    },
+    "src/lib/engine/vendor/index.ts": {
+      "from": "ts/src/index.ts",
+      "sha256": "6c9a5d243935cb5df7ac29b0d29a36cefc361a951d111775d3c81e3e4eb3c8f5"
+    },
+    "src/lib/engine/vendor/jsonfmt.ts": {
+      "from": "ts/src/jsonfmt.ts",
+      "sha256": "fe97aeb52425d7835e1495beeff899443c5f3812561372053f44fe410e80ccb5"
+    },
+    "src/lib/engine/vendor/models.ts": {
+      "from": "ts/src/models.ts",
+      "sha256": "36adc77d64b9c8f9d2ad8c7ff8106410a9376d76a2e6696905027228c8d83e44"
+    },
+    "src/lib/engine/vendor/parse.ts": {
+      "from": "ts/src/parse.ts",
+      "sha256": "6546ea75ff849381c1af7b11fdb45663146909f1f7703829224f27dd95d32f97"
+    },
+    "src/lib/engine/vendor/rng.ts": {
+      "from": "ts/src/rng.ts",
+      "sha256": "7a31f5f304c80f66d5b58b95213a8e32ed0d3a8da6062b0d9702ad3a9977d296"
+    },
+    "src/lib/engine/vendor/tokenizer.ts": {
+      "from": "ts/src/tokenizer.ts",
+      "sha256": "60a2043320c29854dffb85de342fe608bde3d564d50486ed82a08463c7844484"
+    },
+    "src/lib/engine/vendor/tools.ts": {
+      "from": "ts/src/tools.ts",
+      "sha256": "9d91947b5bc800e74b4611fb02cbd8485f3abed20bfc799eb4a998fd87e0d707"
+    },
+    "src/lib/engine/vendor/views.ts": {
+      "from": "ts/src/views.ts",
+      "sha256": "ea095eb223ea8edac2cb7f0b541ea7a4a4c4a222ffb2cb975ec9f89044427714"
+    },
+    "public/tokenizer/qwen2.5-merges.txt": {
+      "from": "src/agent_loop_sim/data/qwen2.5-merges.txt",
+      "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+    },
+    "public/tokenizer/QWEN2.5-LICENSE": {
+      "from": "src/agent_loop_sim/data/QWEN2.5-LICENSE",
+      "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e"
+    },
+    "src/data/traces/qwen-fix-test-native.json": {
+      "from": "traces/qwen-fix-test-native.json",
+      "sha256": "f7b5bbd00edf085ab598794a8ae55fe489a04fbd2368881bcfd6f1e8094d0a3b"
+    },
+    "src/data/traces/qwen-fix-test-react.json": {
+      "from": "traces/qwen-fix-test-react.json",
+      "sha256": "89ebacc6b426b8548a1ff493c11974f925bb1960c06079e3699eb3c4466a165e"
+    },
+    "src/data/traces/qwen-lookup-native.json": {
+      "from": "traces/qwen-lookup-native.json",
+      "sha256": "11bb336160c560fc70074b2eb6b4e98ba4a96fc45b279de3b16c1c6f200861b5"
+    },
+    "tests/fixtures/engine_fixtures.json": {
+      "from": "fixtures/engine_fixtures.json",
+      "sha256": "e061bf318df34a3f572bc9d27a51fc4b13cd548a24e247632681c2d252b99e3c"
+    }
+  }
+}

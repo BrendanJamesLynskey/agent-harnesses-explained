@@ -1,0 +1,73 @@
+<CacheWidget>
+  <Eq
+    label="The cost of one call: the cached part of the prompt at the cache-read price, the rest at the cache-write price, and the output at the output price, per million tokens"
+    tex="\text{cost} = \frac{\htmlClass{hl-read}{p_r\, h N} + \htmlClass{hl-write}{p_w\,(1-h) N} + \htmlClass{hl-out}{p_o M}}{10^6}"
+  />
+</CacheWidget>
+
+<Layer kind="concept">
+
+[Chapter 1](/learn/01-the-agent-loop) showed that an agent re-sends its whole context on every call. Almost all of it is the same as last time: the system prompt, the tool definitions, and every message so far; only the newest messages are new. A provider that keeps the processed prefix of recent prompts (the model's key-value cache for those tokens) can skip recomputing it and charge less for it. That is **prompt caching**, and an agent is the best possible customer for it.
+
+On the Claude API, reading a cached prefix costs a tenth of the input price, and writing one to the 5-minute cache costs 1.25 times the input price; a prefix is only cached if it is at least a model-specific minimum: <V of="prices.claude-sonnet-4.6.min_tokens" fmt="int" /> tokens for Sonnet 4.6, <V of="prices.claude-haiku-4.5.min_tokens" fmt="int" /> for Haiku 4.5. OpenAI's guide describes no cache-write charge for models before GPT-5.6, so none for GPT-5 mini, and cached tokens counted in blocks of <V of="prices.gpt-5-mini.block" fmt="int" /> for those models. (Sources and dates below; the simulator's cache is a simple model of these rules, not either provider's implementation.)
+
+Run the research task from [chapter 3](/learn/03-the-context-budget), with a window big enough not to compact, under three prompt layouts:
+
+- **Stable prefix**: the system prompt and the tools never change and messages are only appended. With Sonnet 4.6 prices, <V of="cache.stable-claude-sonnet-4.6.hit" fmt="pct" /> of all prompt tokens are read from the cache and the run costs <V of="cache.stable-claude-sonnet-4.6.cost" fmt="usd" /> instead of <V of="cache.stable-claude-sonnet-4.6.cost_plain" fmt="usd" />, a saving of <V of="cache.stable-claude-sonnet-4.6.saving" fmt="pct" />. It is faster too: cached tokens need no prefill, and the run finishes in <V of="cache.stable-claude-sonnet-4.6.elapsed" fmt="ms" /> against <V of="cache.timestamp-claude-sonnet-4.6.elapsed" fmt="ms" /> without hits.
+- **Current time in the system prompt**: one line that changes every call, a few dozen tokens in. No prompt ever matches the last one past that point, so nothing is read from the cache, and every prompt is still written to it at the premium: the run costs <V of="cache.timestamp-claude-sonnet-4.6.cost" fmt="usd" />, **more** than with no caching at all.
+- **Tools reordered every turn**: the prefix survives only up to the end of the system text. Hits drop to <V of="cache.reorder_tools-claude-sonnet-4.6.hit" fmt="pct" /> and the cost to <V of="cache.reorder_tools-claude-sonnet-4.6.cost" fmt="usd" />.
+
+Switch the prices to Haiku 4.5 and nothing is cached at all: none of this task's prompts reaches its <V of="prices.claude-haiku-4.5.min_tokens" fmt="int" />-token minimum. The rule a harness follows is simple to state: put what never changes first, in a fixed order, and only ever append.
+
+</Layer>
+
+<Callout kind="illustrative">
+
+Prices are list prices copied on 2026-10-07 and change often; the token counts are Qwen2.5's, not these providers' own tokenizers, so a cost here means "this many tokens at that price", not a quote. Latency uses illustrative rates for a hosted model (time to first token = <V of="latency.hosted.overhead_ms" fmt="int" /> ms + uncached tokens at <V of="latency.hosted.prefill_tps" fmt="int" /> tokens/s); the [LLM Inference Explained](https://llm-inference-explained.vercel.app) site shows where such numbers come from.
+
+</Callout>
+
+<Layer kind="maths">
+
+A call with an $N$-token prompt, of which a fraction $h$ is read from the cache, and $M$ output tokens costs, at prices per million tokens $p_r$ (read), $p_w$ (write) and $p_o$ (output),
+
+$$
+\text{cost} = \frac{p_r\, h N + p_w (1-h) N + p_o M}{10^6},
+$$
+
+when the prompt is written to the cache, or with the plain input price $p_i$ in place of $p_w$ when it is not. Against no caching, $p_i N$, a prefix written once and read $k$ times pays off when
+
+$$
+p_w + k\, p_r < (1 + k)\, p_i \quad\Longleftrightarrow\quad 1.25 + 0.1k < 1 + k \quad\Longleftrightarrow\quad k \ge 1 ,
+$$
+
+with the Claude API's 5-minute multipliers: one re-use repays the write premium, as Anthropic's pricing page says. The timestamp layout is the case $k = 0$: every prompt is written and none is read.
+
+</Layer>
+
+<Layer kind="code">
+
+The cost of one call, cut from the vendored engine ([`accounting.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/accounting.ts)):
+
+```ts
+export function callCost(price: Obj, input: number, cached: number, stored: boolean, output: number): number {
+  const fresh = input - cached;
+  const rate = stored ? price.cache_write : price.input;
+  return (cached * price.cache_read + fresh * rate + output * price.output) / 1e6;
+}
+```
+
+</Layer>
+
+## What breaks a cache
+
+The Claude API builds its cache prefix in the order tools, then system, then messages, and a change at one level invalidates that level and everything after it: changing a tool definition invalidates the whole cache ([prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)). Qwen2.5's template puts the system text first and the tools after it, so in this simulator a rotated tool list keeps the system text cached and loses the rest. Either way, the cures are the same: a fixed tool list in a fixed order, nothing time-varying near the top, history only appended, and compaction ([chapter 3](/learn/03-the-context-budget)) used sparingly, since rewriting the history is itself a cache miss. Claude Code's cost page notes that it uses prompt caching automatically and counts its own compactions as expected rebuilds ([Claude Code, manage costs](https://code.claude.com/docs/en/costs)).
+
+Sources, accessed 2026-10-07: [Claude API pricing](https://platform.claude.com/docs/en/about-claude/pricing) (1.25× write, 0.1× read, 5-minute TTL); [Claude API prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) (minimum lengths, prefix order); [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) and [prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching).
+
+<Callout kind="deeper">
+
+- Coding agents series: [Prompt-Shape Architecture](https://brendanjameslynskey.github.io/CodingAgents_04_Raschka_Repo_Context_And_Caching/#slide-04), [Prompt-Cache Mechanics](https://brendanjameslynskey.github.io/CodingAgents_04_Raschka_Repo_Context_And_Caching/#slide-06), its [interactive cache-cost calculator](https://brendanjameslynskey.github.io/CodingAgents_04_Raschka_Repo_Context_And_Caching/#slide-07) and [What Breaks the Cache](https://brendanjameslynskey.github.io/CodingAgents_04_Raschka_Repo_Context_And_Caching/#slide-08).
+- Why a cached prefix is cheaper to serve: [memory management and prefix caching](https://llm-inference-explained.vercel.app/learn/05-memory-management) on LLM Inference Explained, and [prefix caching as a trade-off](https://inference-tradeoffs-explained.vercel.app/learn/03-prefix-caching) on Inference Trade-offs Explained.
+
+</Callout>

@@ -1,0 +1,83 @@
+<LoopWidget>
+  <Eq
+    label="The context sent on turn t is the system prompt plus the tool definitions plus the task plus every earlier model message and tool result"
+    tex="C_t = \htmlClass{hl-system}{S} + \htmlClass{hl-tools}{T} + \htmlClass{hl-task}{U} + \sum_{i<t} \big(\htmlClass{hl-assistant}{a_i} + \htmlClass{hl-result}{r_i}\big)"
+  />
+</LoopWidget>
+
+<Layer kind="concept">
+
+A chat model does one thing: given a conversation, it writes the next message. It cannot read a file, run a test or look anything up. The **harness** is the program around it that makes it an agent. It sends the model the conversation, reads what the model wrote, and if the model asked for a tool, runs the tool and appends the result. Then it calls the model again, with the longer conversation. It stops when the model answers without asking for a tool, or when one of the harness's own limits is reached.
+
+The animation runs that loop in the simulator this site is built on, on a small task: a repository whose tests fail because `add()` subtracts. With the scripted policy, the run takes <V of="loop.scripted.turns" fmt="int" /> model calls and <V of="loop.scripted.tool_calls" fmt="int" /> tool calls: list the files, run the tests, read the code, fix the line, run the tests again, then answer.
+
+Watch the bar underneath. Every turn, the harness sends the **whole** context again: the system prompt, the tool definitions, the task, and everything said so far. The first call is <V of="loop.scripted.first_input" fmt="tokens" />, of which the tool definitions alone are <V of="loop.scripted.tools_tokens" fmt="tokens" />; by the last it is <V of="loop.scripted.peak" fmt="tokens" />. Over the run the model is sent <V of="loop.scripted.input_tokens" fmt="tokens" /> in total, against <V of="loop.scripted.output_tokens" fmt="tokens" /> it writes. Re-reading the context is where an agent's tokens go, which is why the next chapters are about what goes into it.
+
+Switch the run to one of the **recorded traces**. These are real runs of Qwen2.5-1.5B-Instruct, a small open-weights model, on a CPU, recorded once and replayed here token for token: the harness rebuilds every prompt and checks it matches the recording byte for byte. The small model fails, and the ways it fails are the reasons harnesses exist. On the same task it lists the files and then claims `calc.py` is missing, though the listing shows it. In ReAct style it runs the tests correctly, then wraps its tool call in a Markdown code fence that the parser rejects, twice, and finally reports success without having changed anything. Asked to look up two numbers and calculate, it searches well, two queries in one turn, but then does the arithmetic in prose instead of calling the calculator, gets it wrong and runs into its output limit. The [traces page](/traces) has each recording and its provenance.
+
+</Layer>
+
+<Callout kind="illustrative">
+
+The run is **simulated**: the tools act on a small in-memory repository, and time is modelled. Model time here uses the rates measured while recording the traces (prefill <V of="latency.local-i7.prefill_tps" fmt="num" /> tokens/s, decode <V of="latency.local-i7.decode_tps" fmt="num" /> tokens/s on an old desktop CPU); tool times are illustrative. Token counts are real: they come from Qwen2.5's own tokenizer, checked against llama.cpp's on every prompt.
+
+</Callout>
+
+<Layer kind="maths">
+
+Let $S$ be the system prompt, $T$ the tool definitions, $U$ the task, and $a_i$ and $r_i$ the model's message and the tool results of turn $i$, all in tokens. Turn $t$ sends
+
+$$
+C_t = S + T + U + \sum_{i<t} (a_i + r_i).
+$$
+
+If every turn adds about the same $\Delta = a + r$, the context grows linearly, $C_t \approx C_1 + (t-1)\Delta$, and the total sent over $n$ turns grows with the square:
+
+$$
+\sum_{t=1}^{n} C_t \approx n\,C_1 + \Delta\,\frac{n(n-1)}{2}.
+$$
+
+The output, $\sum a_i$, grows only linearly. That is why long agent runs are dominated by input tokens, and why caching the repeated prefix ([chapter 4](/learn/04-prompt-caching)) and keeping the context small ([chapter 3](/learn/03-the-context-budget)) matter so much.
+
+</Layer>
+
+<Layer kind="code">
+
+The loop, cut from the vendored engine ([`src/lib/engine/vendor/harness.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/harness.ts); its Python reference in [Agent_Loop_Sim](https://github.com/BrendanJamesLynskey/Agent_Loop_Sim) produces identical traces, event for event). The model's text is parsed; no tool call means a final answer:
+
+```ts
+const text = model.complete({ prompt: p.text, input_tokens: p.ids.length, style, last, turn });
+const am = this.message("assistant", "assistant", text, turn);
+const ev = this.modelCall(agent, turn, "act", p, text, am.ids.length);
+used += ev.input_tokens + ev.output_tokens;
+msgs.push(am);
+const parsed = parse(text, style, toolNames);
+if (parsed.kind === "final") {
+  this.checkpoint(agent, turn, msgs, system, toolNames, nCalls);
+  return ["done", parsed.final, used];
+}
+```
+
+</Layer>
+
+## What the harness decides
+
+The model only ever writes text. Everything else is the harness's choice, and the chapters take those choices one at a time:
+
+| Choice                                                        | Chapter                                                        |
+| ------------------------------------------------------------- | -------------------------------------------------------------- |
+| How tools are described, and how calls are written and parsed | [Tool calling](/learn/02-tool-calling)                         |
+| What stays in the context when it fills                       | [The context window as a budget](/learn/03-the-context-budget) |
+| How the prompt is laid out so the provider's cache stays warm | [Prompt caching](/learn/04-prompt-caching)                     |
+| Which calls run, which are refused, which wait for a person   | [Permissions](/learn/05-permissions)                           |
+
+The loop itself is the one the ReAct paper made popular: reason, act, observe, repeat (Yao et al., [arXiv 2210.03629](https://arxiv.org/abs/2210.03629)). Today's APIs return tool calls as structured blocks instead of text: on the Claude API a response that calls a tool ends with `stop_reason: "tool_use"` and holds `tool_use` blocks, and the harness answers with `tool_result` blocks ([Anthropic, tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview), accessed 2026-10-07).
+
+<Callout kind="deeper">
+
+- Agents series: [How LLM Agents Work](https://brendanjameslynskey.github.io/LLM_Agents_guide/#loop) ("The Core Execution Cycle"), and the [Agents hub](https://brendanjameslynskey.github.io/LLM_Hub_Agents/).
+- Coding agents series: [the four-step loop](https://brendanjameslynskey.github.io/CodingAgents_03_Raschka_Components_Overview/#slide-04) and [where the harness sits](https://brendanjameslynskey.github.io/CodingAgents_03_Raschka_Components_Overview/#slide-03).
+- Papers: [ReAct](https://brendanjameslynskey.github.io/Papers_06_Agents_and_Tools/#slide-01) and [Building Effective Agents](https://brendanjameslynskey.github.io/Papers_06_Agents_and_Tools/#slide-04).
+- [Introduction to LangGraph](https://brendanjameslynskey.github.io/Introduction_to_LangGraph/#/14): the same loop as a graph, worked through as a ReAct research agent.
+
+</Callout>

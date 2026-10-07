@@ -1,0 +1,86 @@
+<ToolCallWidget>
+  <Eq
+    label="The extra input tokens one malformed call adds: the whole context of the wasted call, plus its text and the error, re-read by every later call"
+    tex="\Delta_{\text{in}} = \htmlClass{hl-system}{C_{\text{bad}}} + \big(\htmlClass{hl-assistant}{a_{\text{bad}}} + \htmlClass{hl-result}{e}\big)\, n_{\text{later}}"
+  />
+</ToolCallWidget>
+
+<Layer kind="concept">
+
+A model calls a tool by writing text in a format the harness has told it about. The harness does the rest: it reads the text, decides whether it is a valid call, runs the tool, and writes the result back into the conversation. Everything the model knows about the tools comes from the prompt.
+
+In the **native** style the tools are described as JSON Schema inside the system turn. Qwen2.5's chat template, which this site uses for every prompt, wraps them in `<tools></tools>` and asks for each call as a JSON object inside `<tool_call></tool_call>`. Here is one of the four tool definitions exactly as the model sees it, one line of the prompt:
+
+```json
+{"type": "function", "function": {"name": "read_file", "description": "Read a text file and return its contents.", "parameters": {"type": "object", "properties": {"path": {"type": "string", "description": "Path of the file to read."}}, "required": ["path"]}}}
+```
+
+The four definitions and the template's instructions cost <V of="toolcall.native.tools_tokens" fmt="tokens" />, and they are sent on every call. In the **ReAct** style there is no tool block: the system prompt describes the tools in prose and asks for `Thought:`, `Action:` and `Action Input:` lines. That costs <V of="toolcall.react.tools_tokens" fmt="tokens" />, and the harness has to find the action in free text, which is the style's weakness.
+
+The harness makes three checks on every call: is the text valid JSON, is the tool one it offered, and do the arguments fit the tool's schema (required fields present, no unknown fields, strings where strings are expected)? Anything that fails is **malformed**. The harness does not guess; it sends a short error back as the next message and lets the model try again. In the animation, turn 2 is deliberately broken (a missing closing brace natively, an unclosed object in ReAct), and the scripted model repairs it on turn 3.
+
+A malformed call is not free. Natively, it added <V of="toolcall.extra.native" fmt="tokens" /> of input to this run against the same run without it: the wasted call re-sent the whole context (<V of="toolcall.native.bad_context" fmt="tokens" />), and its <V of="toolcall.native.bad_assistant" fmt="int" />-token text and the <V of="toolcall.native.bad_error" fmt="int" />-token error were re-read by each of the <V of="toolcall.native.bad_later" fmt="int" /> calls after it.
+
+The recorded small model shows the failure in the wild. In ReAct style, Qwen2.5-1.5B wrote its `Action Input` inside a Markdown code fence, twice; the parser rejected both, and the model then declared success instead of trying a third time (switch chapter 1's animation to "Qwen: fix (ReAct)" to watch it).
+
+</Layer>
+
+<Callout kind="illustrative">
+
+The scripted model always repairs its broken call on the next turn; real models may not. Token counts are real (Qwen2.5's tokenizer); the tools act on an in-memory repository.
+
+</Callout>
+
+<Layer kind="maths">
+
+Let the malformed call be sent with context $C_{\text{bad}}$, its text be $a_{\text{bad}}$ tokens and the error the harness returns be $e$ tokens. Without the failure, that call would not have happened, and neither message would sit in the context. So, over the rest of a run with $n_{\text{later}}$ more calls,
+
+$$
+\Delta_{\text{in}} = C_{\text{bad}} + (a_{\text{bad}} + e)\, n_{\text{later}}, \qquad \Delta_{\text{out}} = a_{\text{bad}}.
+$$
+
+Here that is <V of="toolcall.native.bad_context" fmt="int" /> + (<V of="toolcall.native.bad_assistant" fmt="int" /> + <V of="toolcall.native.bad_error" fmt="int" />) × <V of="toolcall.native.bad_later" fmt="int" /> = <V of="toolcall.extra.native" fmt="int" /> tokens, exactly the difference the engine measures between the two runs. The earlier in a long run a call fails, the more later calls re-read its debris, which is one reason harnesses validate arguments strictly and return short, specific errors.
+
+</Layer>
+
+<Layer kind="code">
+
+The native parser, cut from the vendored engine ([`src/lib/engine/vendor/parse.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/parse.ts)). The error wording is fixed, not the JSON library's, so Python and TypeScript feed back the same tokens:
+
+```ts
+for (;;) {
+  const start = text.indexOf("<tool_call>", pos);
+  if (start < 0) break;
+  const end = text.indexOf("</tool_call>", start);
+  if (end < 0) return { kind: "malformed", error: "a <tool_call> block is not closed with </tool_call>" };
+  const body = trim(text.slice(start + "<tool_call>".length, end));
+  const [ok, obj] = loadJson(body);
+  if (!ok) return { kind: "malformed", error: "the text inside <tool_call></tool_call> is not valid JSON" };
+  const [call, err] = checkCall(obj, allowed);
+  if (err !== null) return { kind: "malformed", error: err };
+  calls.push(call!);
+  pos = end + "</tool_call>".length;
+}
+```
+
+</Layer>
+
+## The same idea in the public APIs and harnesses
+
+| Where                             | How a call is written                                                                                                                           | How the result comes back                             |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Qwen2.5 chat template (this site) | JSON in `<tool_call>` tags, in the text                                                                                                         | a user turn with `<tool_response>`                    |
+| Claude API                        | `tool_use` content blocks (`id`, `name`, `input`), with `stop_reason: "tool_use"`                                                               | a `tool_result` block naming the `tool_use_id`        |
+| OpenAI Responses API              | `function_call` items (`call_id`, `name`, JSON-encoded `arguments`)                                                                             | a `function_call_output` item with the same `call_id` |
+| ReAct prompting                   | `Action:` and `Action Input:` lines in the text                                                                                                 | an `Observation:` message                             |
+| Aider                             | no function calls in its documented edit formats: whole files, search/replace blocks or unified diffs, written as text (inferred from its docs) | Aider applies the edit itself                         |
+
+Sources, accessed 2026-10-07: [Anthropic, tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview); [OpenAI, function calling](https://developers.openai.com/api/docs/guides/function-calling) (which notes the model "may choose to call multiple functions in a single turn" unless `parallel_tool_calls` is false); [Aider, edit formats](https://aider.chat/docs/more/edit-formats.html); ReAct: Yao et al., [arXiv 2210.03629](https://arxiv.org/abs/2210.03629). The interface a harness gives the model matters as much as the model: the SWE-agent paper calls it the agent-computer interface (Yang et al., [arXiv 2405.15793](https://arxiv.org/abs/2405.15793)).
+
+<Callout kind="deeper">
+
+- Coding agents series: [Anatomy of a Tool Call](https://brendanjameslynskey.github.io/CodingAgents_05_Raschka_Tool_Use/#slide-02), [Designing Tool Schemas](https://brendanjameslynskey.github.io/CodingAgents_05_Raschka_Tool_Use/#slide-06) and [Failure Modes & Recovery](https://brendanjameslynskey.github.io/CodingAgents_05_Raschka_Tool_Use/#slide-08); edit formats in [Search-Replace, Unified Diff, Patch Files](https://brendanjameslynskey.github.io/CodingAgents_02_Edit_Strategies/#slide-02).
+- Agents series: [Calling External Tools](https://brendanjameslynskey.github.io/LLM_Agents_guide/#tools).
+- Papers: [Toolformer](https://brendanjameslynskey.github.io/Papers_06_Agents_and_Tools/#slide-02); tools as a protocol: the [MCP hub](https://brendanjameslynskey.github.io/LLM_Hub_MCP/).
+
+</Callout>

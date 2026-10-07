@@ -1,0 +1,72 @@
+<PermissionWidget>
+  <Eq
+    label="A run's time is the model's time, plus the tools' time, plus every wait for the human to answer a question"
+    tex="T = \htmlClass{hl-model}{\sum t_{\text{model}}} + \htmlClass{hl-tool}{\sum t_{\text{tool}}} + \htmlClass{hl-wait}{\sum_{\text{asks}} w}"
+  />
+</PermissionWidget>
+
+<Layer kind="concept">
+
+A harness that runs whatever the model asks for is as trustworthy as the model. Most harnesses therefore check every tool call against **rules** before running it. A rule names a tool and a pattern for its argument (a path, or a command line) and says **allow**, **ask** or **deny**. On an ask, the run stops until a person answers.
+
+The simulator checks deny rules first, then the mode, then ask rules, then allow rules, then the mode's default; so an allow rule can never carve an exception out of a deny rule. That is the order Claude Code documents: "Rules are evaluated in order: deny, then ask, then allow. The first match in that order determines the outcome" ([Claude Code, permissions](https://code.claude.com/docs/en/permissions), accessed 2026-10-07).
+
+The task is the failing test again, plus some tidying the scripted model decides to do: `rm -rf build`, then `git status`. Two rules are on offer: deny `rm *`, and allow `pytest*` without asking. Then four modes:
+
+- **auto**: anything no rule stops runs. Fastest (<V of="permissions.auto-rule.elapsed" fmt="ms" />); without the deny rule, `rm -rf build` simply runs.
+- **default**: reads run, writes and shell commands ask. With the rules, the human is asked <V of="permissions.default-rule.human_prompts" fmt="int" /> times and the run takes <V of="permissions.default-rule.elapsed" fmt="ms" />; without them, <V of="permissions.default-norule.human_prompts" fmt="int" /> times and <V of="permissions.default-norule.elapsed" fmt="ms" />, and the human, who approves everything here, lets `rm -rf build` through.
+- **ask every time**: every call asks, even reads; <V of="permissions.ask-rule.human_prompts" fmt="int" /> questions and <V of="permissions.ask-rule.elapsed" fmt="ms" />, of which <V of="permissions.ask-rule.human_wait" fmt="ms" /> is waiting for the human.
+- **read-only**: no writes and no shell. Nothing can go wrong, and nothing gets done: <V of="permissions.read_only-rule.denied" fmt="int" /> calls are refused, including the fix itself. The scripted model still ends by claiming the fix worked; the harness knows the edit never ran. Real models do this too (the recorded ReAct trace in [chapter 1](/learn/01-the-agent-loop) declares success after changing nothing), which is why a harness, not the model, should decide when a task is done.
+
+Every question costs the human's attention as well as the run's time: the simulated human takes 3 to 9 seconds per answer, and a real one, switching back from other work, usually takes longer. A rule that allows the safe, frequent calls (here, running the tests) removes most of the questions without loosening anything that matters.
+
+</Layer>
+
+<Callout kind="illustrative">
+
+The simulated human answers in a time drawn uniformly from 3 to 9 seconds (seeded, so every run is reproducible) and approves every question; both are illustrative. The modes are this simulator's simplified versions; the public harnesses' modes (below) differ in detail.
+
+</Callout>
+
+<Layer kind="maths">
+
+Splitting a run's time $T$ into the model's calls, the tools' runs and the waits for a person,
+
+$$
+T = \sum t_{\text{model}} + \sum t_{\text{tool}} + \sum_{\text{asks}} w ,
+$$
+
+the first two hardly change between the modes; the last is a count times a typical wait. With $q$ questions and a mean wait $\bar w$, asking costs about $q \bar w$; here $\bar w$ = 6 s, so the <V of="permissions.ask-rule.human_prompts" fmt="int" /> questions of the strictest mode add about <V of="permissions.ask-rule.human_wait" fmt="ms" />, several times the work itself. Reducing $q$ with precise allow rules is worth more than making the model faster.
+
+</Layer>
+
+<Layer kind="code">
+
+The decision for one call, cut from the vendored engine ([`harness.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/harness.ts)):
+
+```ts
+if (hits.has("deny")) return ["deny", hits.get("deny")!];
+if (mode === "read_only" && !spec.read_only) return ["deny", "mode: read-only"];
+if (mode === "ask") return ["ask", "mode: ask every time"];
+if (hits.has("ask")) return ["ask", hits.get("ask")!];
+if (hits.has("allow")) return ["allow", hits.get("allow")!];
+```
+
+</Layer>
+
+## Modes in the public harnesses
+
+| Harness     | Modes and controls (from their docs, accessed 2026-10-07)                                                                                                                                                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Claude Code | permission modes `default` (asks on first use of each tool), `acceptEdits`, `plan` (explores without editing), `auto` (a classifier reviews actions instead of a person), `dontAsk` and `bypassPermissions`; allow, ask and deny rules such as `Bash(rm *)` ([permissions](https://code.claude.com/docs/en/permissions)) |
+| Codex CLI   | approval policies such as `on-request` and `never`, combined with sandbox modes `read-only`, `workspace-write` (the default) and `danger-full-access` ([approvals and security](https://learn.chatgpt.com/docs/agent-approvals-security))                                                                                |
+
+The two take different routes to the same end. Rules decide per call; a **sandbox** limits what any call can reach, whatever the rules say. [Chapter 7](/learn) (hooks and sandboxing, coming next) draws that boundary; the Security site in this family will cover the threats in depth.
+
+<Callout kind="deeper">
+
+- Coding agents series: [Approval Modes — Trust vs Caution](https://brendanjameslynskey.github.io/CodingAgents_05_Raschka_Tool_Use/#slide-04), [The Four Validation Questions](https://brendanjameslynskey.github.io/CodingAgents_05_Raschka_Tool_Use/#slide-03) and the [interactive approval gate](https://brendanjameslynskey.github.io/CodingAgents_05_Raschka_Tool_Use/#slide-07).
+- [Introduction to LangGraph](https://brendanjameslynskey.github.io/Introduction_to_LangGraph/#/8): human-in-the-loop as interrupts in a graph.
+- Tool permissions as a protocol concern: [MCP Security & OAuth 2.1](https://brendanjameslynskey.github.io/MCP_04_Security_and_OAuth/).
+
+</Callout>
