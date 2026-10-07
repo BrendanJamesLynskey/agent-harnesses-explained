@@ -43,3 +43,23 @@ export const PermissionWidget = dynamic(() => import("./PermissionWidget"), {
   ssr: false,
   loading: loading("animation"),
 });
+export const SubagentWidget = dynamic(() => import("./SubagentWidget"), {
+  ssr: false,
+  loading: loading("animation"),
+});
+export const HooksWidget = dynamic(() => import("./HooksWidget"), {
+  ssr: false,
+  loading: loading("animation"),
+});
+export const RecoveryWidget = dynamic(() => import("./RecoveryWidget"), {
+  ssr: false,
+  loading: loading("animation"),
+});
+export const HarnessesWidget = dynamic(() => import("./HarnessesWidget"), {
+  ssr: false,
+  loading: loading("animation"),
+});
+export const CostWidget = dynamic(() => import("./CostWidget"), {
+  ssr: false,
+  loading: loading("animation"),
+});

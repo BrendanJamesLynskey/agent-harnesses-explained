@@ -1,0 +1,76 @@
+<HooksWidget>
+  <Eq
+    label="A call runs only if the permission rules allow it, no hook blocks it, and, for a shell command, it stays inside the sandbox"
+    tex="\text{runs}(c) = \htmlClass{hl-perm}{\text{allowed}(c)} \;\land\; \lnot\,\htmlClass{hl-hook}{\text{blocked}(c)} \;\land\; \htmlClass{hl-sandbox}{\text{inside}(c)}"
+  />
+</HooksWidget>
+
+<Layer kind="concept">
+
+Permission rules ([chapter 5](/learn/05-permissions)) are one checkpoint. A harness has two more. **Hooks** are the user's own code, run by the harness at fixed points: a **pre-tool** hook sees every call before it runs and can block it or rewrite it; a **post-tool** hook sees the result and can add to it. A **sandbox** is a boundary the operating system enforces around the commands the agent runs: whatever the rules allowed, a sandboxed command cannot write outside the workspace or reach the network.
+
+The task is the failing test again, after which the scripted model wants to install a coverage plugin (`pip install pytest-cov`), clear the build directory (`rm -rf build`) and clear a cache in the home directory (`rm -rf ~/.cache/pytest`). Three hooks are on offer: `no-rm` blocks any `rm`; `quiet-tests` rewrites `pytest` to `pytest -q`; `lint` appends a lint result after every edit. Follow one call through the checkpoints in the animation, then change the sandbox:
+
+- **No sandbox, no hooks**: every call runs. On a real machine, `rm -rf ~/.cache/pytest` would have deleted part of your home directory.
+- **Workspace sandbox**: writes inside the repository and no network. The install and the home-directory delete are stopped (<V of="hooks.workspace-nohooks.sandboxed" fmt="int" /> calls), while `rm -rf build`, inside the repository, still runs.
+- **Read-only sandbox**: no writes at all; <V of="hooks.read_only-nohooks.sandboxed" fmt="int" /> shell calls are stopped, `rm -rf build` among them. The edit that fixes the test still happens: it is a file tool, not a shell command, and the sandbox wraps the shell only. That is how the public sandboxes work too (see the table below), and why permission rules still matter inside one.
+- **With the hooks**: `no-rm` blocks both deletes before the sandbox is reached (<V of="hooks.workspace-hooks.blocked" fmt="int" /> calls blocked), so in workspace mode the sandbox stops only the install. The rewrite and the lint note change what the model sees, at no risk.
+
+Order matters. A hook runs before the tool; the sandbox applies while it runs. A hook can stop a call the sandbox would have allowed (deleting the build directory), and the sandbox stops what no rule or hook thought of (a path outside the workspace, written some other way). Neither replaces the other.
+
+</Layer>
+
+<Callout kind="illustrative">
+
+The sandbox here checks the command line, which is all a simulated shell has: it knows `pip install` and `curl` need the network and that a path starting with `/`, `~` or `..` is outside the repository. A real sandbox is enforced by the operating system on every file and network access the command makes, so it also catches what a command line hides. Hook and tool latencies are illustrative. This chapter is about the mechanisms; the Security site in this family will cover the threats they defend against.
+
+</Callout>
+
+<Layer kind="maths">
+
+Write a call's fate as three predicates, checked in order: the permission decision $\text{allowed}(c)$ (with a human's answer if the rules asked), the pre-tool hooks' $\text{blocked}(c)$, and for a shell command the sandbox's $\text{inside}(c)$:
+
+$$
+\text{runs}(c) = \text{allowed}(c) \land \lnot\,\text{blocked}(c) \land \text{inside}(c).
+$$
+
+The first two are the harness's decisions, made before anything runs, from what the call says. The third is the operating system's, made while it runs, from what the call does. A rule or a hook that misreads a command (a shell alias, a script that deletes files) lets it through; the sandbox does not read commands at all. Hooks cost time too: here the three hooks change the run's time from <V of="hooks.workspace-nohooks.elapsed" fmt="ms" /> to <V of="hooks.workspace-hooks.elapsed" fmt="ms" />, because the two blocked deletes never run.
+
+</Layer>
+
+<Layer kind="code">
+
+A pre-tool hook, cut from the vendored engine ([`harness.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/harness.ts)): a block ends the call before it reaches the tool.
+
+```ts
+if (h.action === "block") {
+  this.emit("hook", agent, this.t, { call: cid, hook: h.name, phase: "pre", action: "block", result: "blocked" });
+  outcome = { cid, call: c, args, outcome: "blocked", text: `Blocked by hook ${h.name}: ${h.message ?? "not allowed"}` };
+  break;
+}
+```
+
+And the sandbox's check on a shell command ([`tools.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/tools.ts)):
+
+```ts
+if ((NETWORK_COMMANDS.includes(cmd) || installs) && !(sandbox.network ?? false))
+  return `${cmd}: network access is blocked by the sandbox`;
+```
+
+</Layer>
+
+## The sandbox in the public harnesses
+
+| Harness     | Hooks and sandbox (from their docs, accessed 2026-10-07)                                                                                                                                                                                                                                                                                                                                                        |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code | `PreToolUse` hooks can block a call or replace its arguments (`updatedInput`); `PostToolUse` can replace the result ([hooks](https://code.claude.com/docs/en/hooks)). The Bash sandbox "is off by default"; when on, commands write to the working directory and reach the network through allowed domains; "The sandbox covers shell commands only" ([sandboxing](https://code.claude.com/docs/en/sandboxing)) |
+| Codex CLI   | `PreToolUse` can deny a call or return `updatedInput`; `PostToolUse` can add context ([hooks](https://learn.chatgpt.com/docs/hooks)). Sandbox modes `read-only`, `workspace-write` and `danger-full-access`, with the network off by default in `workspace-write` ([approvals and security](https://learn.chatgpt.com/docs/agent-approvals-security))                                                           |
+| OpenHands   | `PreToolUse` hooks can stop a tool call ([hooks](https://docs.openhands.dev/openhands/usage/customization/hooks)); a Docker sandbox, the recommended default, runs the agent's commands in a container ([sandboxes](https://docs.openhands.dev/openhands/usage/sandboxes/overview))                                                                                                                             |
+
+<Callout kind="deeper">
+
+- Coding agents series: [Sandboxing & Recursion Depth](https://brendanjameslynskey.github.io/CodingAgents_07_Raschka_Subagents_And_Synthesis/#slide-04) and [The Four Validation Questions](https://brendanjameslynskey.github.io/CodingAgents_05_Raschka_Tool_Use/#slide-03).
+- Tool permissions as a protocol concern: [MCP Security & OAuth 2.1](https://brendanjameslynskey.github.io/MCP_04_Security_and_OAuth/), and the [MCP hub](https://brendanjameslynskey.github.io/LLM_Hub_MCP/).
+- The [Coding Agents hub](https://brendanjameslynskey.github.io/LLM_Hub_Coding_Agents/).
+
+</Callout>

@@ -8,7 +8,9 @@
         "http://localhost:3000/traces",
         "http://localhost:3000/learn/01-the-agent-loop",
         "http://localhost:3000/learn/03-the-context-budget",
-        "http://localhost:3000/learn/05-permissions"
+        "http://localhost:3000/learn/05-permissions",
+        "http://localhost:3000/learn/09-harnesses-compared",
+        "http://localhost:3000/learn/10-cost-and-latency"
       ],
       "numberOfRuns": 3
     },

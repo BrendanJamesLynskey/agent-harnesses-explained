@@ -1,0 +1,84 @@
+<RecoveryWidget>
+  <Eq
+    label="A call with r retries fails only if every attempt fails, with probability p to the power r plus one; the waits between attempts grow geometrically"
+    tex="P_{\text{call}} = 1 - \htmlClass{hl-fail}{p}^{\,\htmlClass{hl-retry}{r}+1}, \qquad T_{\text{wait}} = \sum_{k=0}^{\htmlClass{hl-retry}{r}-1} \htmlClass{hl-backoff}{b\,f^{k}}"
+  />
+</RecoveryWidget>
+
+<Layer kind="concept">
+
+Tools fail. A network call times out, a test runner crashes, a file is locked. A harness decides what happens next, at three levels:
+
+1. **Retry** the same call, after a wait that grows each time (**exponential back-off**: here 500 ms, then 1 s, then 2 s), up to a **retry budget**. The model never sees a failure that a retry fixed.
+2. When the budget is spent, **feed the error back** to the model as the tool's result, and let it decide. The scripted model here does what models often do: it tries the same call again.
+3. **Detect loops**: three identical calls in a row are not progress. The harness either **stops** the run or **nudges** the model with a message telling it to try something else.
+
+Seed 0, with no retries, shows the failure: the shell fails twice in a row, the model asks for the same `pytest` a third time, and loop detection stops the run after <V of="recovery.r0-stop.elapsed" fmt="ms" />, with the bug unfixed. One retry is not enough for this seed either. With two, the retries absorb every failure and the run finishes in <V of="recovery.r2-stop.elapsed" fmt="ms" /> after <V of="recovery.r2-stop.retries" fmt="int" /> retries: slower than a lucky run, because waiting is the price of a retry.
+
+Now set the budget to 0 and choose **nudge**. The run "finishes": the nudge moves the model on, it edits the file, the last test run fails again, and the model reports that all the tests pass. The run's status is done; the tests never passed. A harness that counts "the model said it was done" as success will report this run as a success. Counting only runs whose last test run passed tells the truth, and that is what the chart below does.
+
+</Layer>
+
+<SweepChart />
+
+Over 100 seeded runs per budget, with the shell failing <V of="recovery.model.p" fmt="pct" /> of attempts: with no retries, <V of="sweeps.recovery.stop.0.success" fmt="pct" /> of runs finish; one retry lifts that to <V of="sweeps.recovery.stop.1.success" fmt="pct" />, and two to <V of="sweeps.recovery.stop.2.success" fmt="pct" />. With nudges instead of stops, <V of="sweeps.recovery.nudge.0.success" fmt="pct" /> of the no-retry runs finish, but only <V of="sweeps.recovery.nudge.0.verified_rate" fmt="pct" /> with their tests passing. Past two retries, a bigger budget buys nothing here and costs time: the mean run takes <V of="sweeps.recovery.stop.2.mean_elapsed" fmt="ms" /> with two retries and <V of="sweeps.recovery.stop.4.mean_elapsed" fmt="ms" /> with four.
+
+<Callout kind="illustrative">
+
+The shell's failure rate (30% of attempts, independent, seeded), the back-off schedule and the tool times are illustrative; real failures are often not independent (a service that is down stays down, and retrying it only adds load), which is what back-off and a budget protect against. The scripted model always repeats a failed call; a real model may try something else first.
+
+</Callout>
+
+<Layer kind="maths">
+
+If each attempt fails independently with probability $p$, a call with a budget of $r$ retries fails only when all $r+1$ attempts do:
+
+$$
+P_{\text{call}} = 1 - p^{\,r+1},
+$$
+
+so with $p$ = <V of="recovery.model.p" fmt="num" />, one call succeeds with probability <V of="recovery.model.0.call" fmt="num" />, <V of="recovery.model.1.call" fmt="num" /> and <V of="recovery.model.2.call" fmt="num" /> for 0, 1 and 2 retries. A run is a chain of calls: here the model repeats a failed test run, and loop detection allows two identical calls in a row, so a test step is lost only when two calls in a row fail, with probability $q^2$ where $q = p^{\,r+1}$. The task has two test steps:
+
+$$
+P_{\text{run}} = (1 - q^2)^2 ,
+$$
+
+which predicts <V of="recovery.model.0.run" fmt="pct" />, <V of="recovery.model.1.run" fmt="pct" /> and <V of="recovery.model.2.run" fmt="pct" />; the 100 seeded runs measured <V of="sweeps.recovery.stop.0.success" fmt="pct" />, <V of="sweeps.recovery.stop.1.success" fmt="pct" /> and <V of="sweeps.recovery.stop.2.success" fmt="pct" />, within sampling error (about ±4 points at 100 runs). The price is time: the waits before retry $k$ are $b f^{k}$, so a call that uses its whole budget waits $T_{\text{wait}} = b\,(f^{r}-1)/(f-1)$, here <V of="recovery.model.2.backoff" fmt="ms" /> for two retries and <V of="recovery.model.4.backoff" fmt="ms" /> for four, on top of the failed attempts themselves.
+
+</Layer>
+
+<Layer kind="code">
+
+The retry loop, cut from the vendored engine ([`harness.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/harness.ts)):
+
+```ts
+if (this.fault(name)) {
+  if (attempt < rec.retries) {
+    const backoff = rec.backoff_ms * rec.backoff_factor ** attempt;
+    attempt += 1;
+```
+
+The success test the chart uses ([`sweeps.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/sweeps.ts)): finished, and the last test run passed.
+
+```ts
+return events[events.length - 1]!.status === "done" && lastOk;
+```
+
+</Layer>
+
+## Recovery in the public harnesses
+
+| Harness        | Recovery and limits (from their docs, accessed 2026-10-07)                                                                                                                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SWE-agent      | `max_requeries` (default 3): "Maximum number of times to requery the model after an error, such as a formatting error, a blocked action, or a bash syntax error" ([agent configuration](https://swe-agent.com/latest/reference/agent_config/)) |
+| mini-SWE-agent | a cost limit ($3 by default) and a step limit (0, unlimited, by default) ([the `mini` command](https://mini-swe-agent.com/latest/usage/mini/))                                                                                                 |
+| Aider          | after an edit it lints (and, with `--auto-test`, tests), and "aider will try and fix any errors if the command returns a non-zero exit code" ([linting and testing](https://aider.chat/docs/usage/lint-test.html))                             |
+
+<Callout kind="deeper">
+
+- Coding agents series: [Failure Modes & Recovery](https://brendanjameslynskey.github.io/CodingAgents_05_Raschka_Tool_Use/#slide-08).
+- [Introduction to LangGraph](https://brendanjameslynskey.github.io/Introduction_to_LangGraph/#/7): checkpointing, so a failed run can resume rather than restart.
+- Evaluation papers: [HumanEval](https://brendanjameslynskey.github.io/Papers_07_Evaluation_and_Benchmarks/#slide-02) judges code by running its tests, not by what the model says about it.
+- The [Agents hub](https://brendanjameslynskey.github.io/LLM_Hub_Agents/).
+
+</Callout>

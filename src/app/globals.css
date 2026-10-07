@@ -206,6 +206,36 @@
 .eq-panel .hl-wait {
   border-color: #cc79a7;
 }
+.eq-panel .hl-parent {
+  border-color: #e69f00;
+}
+.eq-panel .hl-child {
+  border-color: #56b4e9;
+}
+.eq-panel .hl-perm {
+  border-color: #cc79a7;
+}
+.eq-panel .hl-hook {
+  border-color: #0072b2;
+}
+.eq-panel .hl-sandbox {
+  border-color: #d55e00;
+}
+.eq-panel .hl-fail {
+  border-color: #d55e00;
+}
+.eq-panel .hl-retry {
+  border-color: #009e73;
+}
+.eq-panel .hl-backoff {
+  border-color: #d55e00;
+}
+.eq-panel .hl-fresh {
+  border-color: #56b4e9;
+}
+.eq-panel .hl-ttft {
+  border-color: #525252;
+}
 .eq-panel[data-hl~="system"] .hl-system,
 .eq-panel[data-hl~="tools"] .hl-tools,
 .eq-panel[data-hl~="task"] .hl-task,
@@ -222,6 +252,16 @@
 .eq-panel[data-hl~="window"] .hl-window,
 .eq-panel[data-hl~="trigger"] .hl-trigger,
 .eq-panel[data-hl~="reserve"] .hl-reserve,
+.eq-panel[data-hl~="parent"] .hl-parent,
+.eq-panel[data-hl~="child"] .hl-child,
+.eq-panel[data-hl~="perm"] .hl-perm,
+.eq-panel[data-hl~="hook"] .hl-hook,
+.eq-panel[data-hl~="sandbox"] .hl-sandbox,
+.eq-panel[data-hl~="fail"] .hl-fail,
+.eq-panel[data-hl~="retry"] .hl-retry,
+.eq-panel[data-hl~="backoff"] .hl-backoff,
+.eq-panel[data-hl~="fresh"] .hl-fresh,
+.eq-panel[data-hl~="ttft"] .hl-ttft,
 .eq-panel[data-hl~="wait"] .hl-wait {
   background-color: rgb(0 114 178 / 0.18);
 }

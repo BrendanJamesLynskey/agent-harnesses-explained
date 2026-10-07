@@ -10,7 +10,7 @@ simulator with a real tokenizer, tested against its Python reference. **No live 
 the teaching runs are scripted, and three runs of a small open-weights model were recorded once and are
 replayed token for token.
 
-![The agent loop](docs/screenshots/02-agent-loop.png)
+![The agent loop: the model, the harness and the tools, with the context window filling on every turn](docs/media/agent-loop.gif)
 
 Part of a family of companion sites. LLM systems: the
 [Transformer Decoder Explainer](https://transformer-decoder-explained.vercel.app),
@@ -30,10 +30,24 @@ Part of a family of companion sites. LLM systems: the
 | 03  | [The context window as a budget](https://agent-harnesses-explained.vercel.app/learn/03-the-context-budget) | the window filling call by call until compaction fires; truncate, clip or summarise, and the facts each loses                        |
 | 04  | [Prompt caching](https://agent-harnesses-explained.vercel.app/learn/04-prompt-caching)                     | the cached prefix call by call, and the running cost with and without it; what breaks the cache                                      |
 | 05  | [Permissions and the human in the loop](https://agent-harnesses-explained.vercel.app/learn/05-permissions) | allow / ask / deny rules evaluated live; the human's waits on a timeline; four modes compared                                        |
+| 06  | [Sub-agents](https://agent-harnesses-explained.vercel.app/learn/06-sub-agents)                             | the parent's and the sub-agent's contexts side by side; the report handed back; tokens saved against time and money spent            |
+| 07  | [Hooks and sandboxing](https://agent-harnesses-explained.vercel.app/learn/07-hooks-and-sandboxing)         | each call through permissions, pre-tool hooks, the sandbox boundary around the shell and post-tool hooks                             |
+| 08  | [Failure and recovery](https://agent-harnesses-explained.vercel.app/learn/08-failure-and-recovery)         | retries with back-off and loop detection on a timeline; success against the retry budget over 100 seeded runs                        |
+| 09  | [Harnesses compared](https://agent-harnesses-explained.vercel.app/learn/09-harnesses-compared)             | a sourced matrix of six public harnesses' choices, and the same task under a policy imitation of each (not the products)             |
+| 10  | [Cost and latency of a task](https://agent-harnesses-explained.vercel.app/learn/10-cost-and-latency)       | a live calculator: every model call's cost and time taken apart, for any task, price, speed, cache and permission mode               |
 
-Coming next: sub-agents, hooks and sandboxing, failure and recovery, the public harnesses compared, and the
-full cost and latency of a task. [`/traces`](https://agent-harnesses-explained.vercel.app/traces) holds the
-recorded traces with their provenance.
+[`/traces`](https://agent-harnesses-explained.vercel.app/traces) holds the recorded traces with their provenance.
+
+### The hero animations
+
+Recorded frame by frame from the engine's states (`pnpm animations`, against a local build); each is also in
+`docs/media/` as WebM.
+
+|                                                                                                             |                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| ![The context budget: the window filling until summarising compaction fires](docs/media/context-budget.gif) | ![Sub-agents: the notes fill the sub-agent's context while the parent's stays small](docs/media/sub-agents.gif) |
+| ![Hooks and the sandbox: each call through the checkpoints](docs/media/hooks-and-sandbox.gif)               | ![Failure and recovery: retries, back-off and loop detection on a timeline](docs/media/recovery.gif)            |
+| ![Six harness imitations, call by call](docs/media/harnesses.gif)                                           | ![Permissions: the rule table evaluated against each call](docs/screenshots/06-permissions.png)                 |
 
 |                                                           |                                                               |
 | --------------------------------------------------------- | ------------------------------------------------------------- |
@@ -69,15 +83,19 @@ reproduce every event and every animation frame exactly.
   model's speed is measured (the recorded traces' llama.cpp timings).
 - The scripted policies and the scripted summariser stand in for a model; chapter 3's tiny windows are chosen
   so a short task fills them.
-- Descriptions of public harnesses (Claude Code, Codex CLI, Aider) come from their documentation, with access
-  dates; anything not read from a document is marked as inferred.
+- Descriptions of public harnesses (Claude Code, Codex CLI, Aider, OpenHands, SWE-agent, mini-SWE-agent) come
+  from their documentation, with access dates; anything not read from a document is marked as inferred.
+  Chapter 9's runs are **a policy imitation, not the product**: the same scripted model under the engine's
+  settings closest to each harness's documented defaults.
+- Chapter 7's sandbox checks command lines (a simulated shell has nothing else); a real sandbox is enforced
+  by the operating system. Chapter 8's tool failure rate (30% of attempts, independent, seeded) is invented.
 
 ## Checks
 
 | Check                                                                                                                                                                                                  | Where                                                                        |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
 | Python reference regenerates the site's fixtures; vendored hashes; traces replay                                                                                                                       | CI "Model and fixtures" (`scripts/make_fixtures.py --check`, `tests/python`) |
-| TS engine = Python reference on every run and frame; captions; chapters' code, equations, links, values                                                                                                | CI "Unit Tests" (`tests/unit`)                                               |
+| TS engine = Python reference on every run, frame and seeded sweep; captions; chapters' code, equations, links, values; every matrix cell sourced or marked inferred                                    | CI "Unit Tests" (`tests/unit`)                                               |
 | Every page at 1,280 and 390 px, light and dark: no errors, no overflow; every animation plays, steps, scrubs, resets, keys; reduced motion; frame captions on the page; axe; the two-group site switch | CI "E2E Tests" (`tests/e2e`)                                                 |
 | Lighthouse ≥ 0.9 (performance, accessibility, best practices)                                                                                                                                          | CI "Lighthouse"                                                              |
 

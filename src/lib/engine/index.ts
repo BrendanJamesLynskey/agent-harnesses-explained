@@ -4,12 +4,14 @@
  * policy, or a recorded trace replayed token-exactly; nothing here calls a language model.
  */
 import CONFIGS from "@/data/chapter_configs.json";
+import SWEEPS from "@/data/sweep_configs.json";
 import TRACE_FIX_NATIVE from "@/data/traces/qwen-fix-test-native.json";
 import TRACE_FIX_REACT from "@/data/traces/qwen-fix-test-react.json";
 import TRACE_LOOKUP from "@/data/traces/qwen-lookup-native.json";
 
 import {
   replayTrace,
+  retrySweep,
   run,
   scenario,
   type Ev,
@@ -64,5 +66,29 @@ export function runChapter(
   const out: Record<string, Ev[]> = {};
   for (const [k, cfg] of Object.entries(CHAPTER_CONFIGS[chapter]))
     out[k] = runConfig(cfg, tok);
+  return out;
+}
+
+export type SweepName = keyof typeof SWEEPS;
+export const SWEEP_CONFIGS = SWEEPS as unknown as Record<
+  SweepName,
+  {
+    scenario: string;
+    budgets: number[];
+    seeds: number;
+    policies: Record<string, Obj | null>;
+  }
+>;
+
+/** A chapter's seeded sweep (src/data/sweep_configs.json): rows per policy key. */
+export function runSweep(
+  name: SweepName,
+  tok: Tokenizer,
+): Record<string, Obj[]> {
+  const sw = SWEEP_CONFIGS[name];
+  const seeds = Array.from({ length: sw.seeds }, (_, i) => i);
+  const out: Record<string, Obj[]> = {};
+  for (const [k, pol] of Object.entries(sw.policies))
+    out[k] = retrySweep(sw.scenario, sw.budgets, seeds, pol, tok);
   return out;
 }

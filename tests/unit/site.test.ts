@@ -104,7 +104,7 @@ describe("palette", () => {
 
 describe("chapters and site", () => {
   it("catalogue", async () => {
-    expect(SECTIONS).toHaveLength(5);
+    expect(SECTIONS).toHaveLength(10);
     expect(isValidSlug("01-the-agent-loop")).toBe(true);
     expect(isValidSlug("99-nope")).toBe(false);
     expect(getSectionMeta("02-tool-calling").title).toBe("Tool calling");

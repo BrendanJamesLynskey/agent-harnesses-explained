@@ -1,0 +1,62 @@
+<HarnessesWidget>
+  <Eq
+    label="A harness's run time is the model's time, which depends on its tool-call format, plus the tools' time, plus the number of questions it asks times the human's mean wait"
+    tex="T_h = \htmlClass{hl-model}{T_{\text{model}}(\text{format}_h)} + \htmlClass{hl-tool}{T_{\text{tool}}} + \htmlClass{hl-wait}{q_h\,\bar w}"
+  />
+</HarnessesWidget>
+
+<Layer kind="concept">
+
+Every mechanism in this site is a choice a real harness makes: how tool calls are written, what needs a person's approval, whether there is a sandbox, what happens when the context fills, whether there are sub-agents and hooks. The matrix below records how six public coding-agent harnesses make those choices, from their own documentation; the animation replays one task under a **policy imitation** of each: the simulator's settings closest to that harness's documented defaults.
+
+**A policy imitation, not the product.** The model is the same scripted policy in every row, so it takes the same <V of="harnesses.claude-code.turns" fmt="int" /> turns everywhere, and the price is the same list price. What changes is only what the harness does around the model. That isolates the harness, and it also means the rows say nothing about how good each product is: the products differ far more in their prompts, their tools and the models they are used with than any of this shows.
+
+What the imitation does show:
+
+- **Approvals dominate the time.** The imitations that ask before shell commands or edits (Claude Code's default mode, Aider, mini-SWE-agent's confirm mode) spend most of the run waiting for the human: mini-SWE-agent asks <V of="harnesses.mini-swe-agent.human_prompts" fmt="int" /> questions and takes <V of="harnesses.mini-swe-agent.elapsed" fmt="ms" />, against <V of="harnesses.swe-agent.elapsed" fmt="ms" /> for the SWE-agent imitation, which asks nothing. OpenHands' risk-based confirmation asks only about the deletes (<V of="harnesses.openhands.human_prompts" fmt="int" /> questions).
+- **The sandbox stops what the questions would have let through.** With no prompts inside its workspace sandbox, the Codex CLI imitation is as fast as the no-approval one, yet it is the only row in which the install and the home-directory delete are stopped (<V of="harnesses.codex-cli.sandboxed" fmt="int" /> calls), because the simulated human approves everything.
+- **The tool-call format changes the tokens, a little.** The text-parsing imitations (Aider, mini-SWE-agent) send <V of="harnesses.aider.input_tokens" fmt="tokens" /> against <V of="harnesses.claude-code.input_tokens" fmt="tokens" /> for native calls, because a ReAct prompt describes the tools more briefly. Here they still cost more (<V of="harnesses.aider.cost" fmt="usd" /> against <V of="harnesses.claude-code.cost" fmt="usd" />): their shorter prompts stay under the cache's 1,024-token minimum, so none of them is read from the cache.
+
+</Layer>
+
+<HarnessMatrix />
+
+<Callout kind="illustrative">
+
+Each row's policy is our reading of documented defaults on 2026-10-07, simplified to the simulator's knobs: Claude Code's "don't ask again" answers, Codex's on-request escalation out of the sandbox, OpenHands' risk analyser and Aider's edit formats are not modelled, and cells marked "inferred" are not documented statements. The simulated human answers in 3 to 9 seconds and approves every question; prices are Claude Sonnet 4.6 list prices for every row; hosted-model speed is illustrative.
+
+</Callout>
+
+<Layer kind="maths">
+
+Split a run's time into the model's calls, the tools and the human:
+
+$$
+T_h = T_{\text{model}}(\text{format}_h) + T_{\text{tool}} + q_h\,\bar w ,
+$$
+
+where $q_h$ is the number of questions harness $h$ asks and $\bar w$ the mean wait for an answer (6 s here). With the same model and the same steps, $T_{\text{tool}}$ is the same in every row (less the calls a sandbox stops at once), and $T_{\text{model}}$ moves only with the prompt format; $q_h$ ranges from <V of="harnesses.swe-agent.human_prompts" fmt="int" /> to <V of="harnesses.mini-swe-agent.human_prompts" fmt="int" />, so it decides the ranking. The asking rows spend <V of="harnesses.claude-code.human_wait" fmt="ms" /> (Claude Code imitation) and <V of="harnesses.mini-swe-agent.human_wait" fmt="ms" /> (mini-SWE-agent imitation) waiting for the human.
+
+</Layer>
+
+<Layer kind="code">
+
+Each imitation is a policy for the same engine; the permission decision every row runs, cut from the vendored engine ([`harness.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/harness.ts)):
+
+```ts
+if (hits.has("deny")) return ["deny", hits.get("deny")!];
+if (mode === "read_only" && !spec.read_only) return ["deny", "mode: read-only"];
+if (mode === "ask") return ["ask", "mode: ask every time"];
+```
+
+The six policies are in [`chapter_configs.json`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/data/chapter_configs.json) (chapter `harnesses`), and the matrix's sources in [`harnesses.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/agent/harnesses.ts).
+
+</Layer>
+
+<Callout kind="deeper">
+
+- Coding agents series: [Claude Code vs Codex CLI — Two Subagent Models](https://brendanjameslynskey.github.io/CodingAgents_07_Raschka_Subagents_And_Synthesis/#slide-05), [The Six Components at a Glance](https://brendanjameslynskey.github.io/CodingAgents_03_Raschka_Components_Overview/#slide-05) and [Why the Harness Can Beat the Bigger Model](https://brendanjameslynskey.github.io/CodingAgents_03_Raschka_Components_Overview/#slide-06).
+- Agents and tools papers: [Building Effective Agents — Workflows vs Agents](https://brendanjameslynskey.github.io/Papers_06_Agents_and_Tools/#slide-04) and [ReAct](https://brendanjameslynskey.github.io/Papers_06_Agents_and_Tools/#slide-01), the text format two of the imitations use.
+- The [Coding Agents hub](https://brendanjameslynskey.github.io/LLM_Hub_Coding_Agents/), and a harness built step by step in LangGraph: [Raschka_Coding_Agent_LangGraph](https://github.com/BrendanJamesLynskey/Raschka_Coding_Agent_LangGraph).
+
+</Callout>

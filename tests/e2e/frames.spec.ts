@@ -8,12 +8,20 @@ import { expect, test, type Locator } from "@playwright/test";
 import fx from "../fixtures/site_fixtures.json";
 
 import {
+  RECOVERY_TYPES,
+  agentsCaption,
   budgetCaption,
   cacheCaption,
+  costCaption,
+  harnessCaption,
   loopCaption,
   permissionCaption,
+  pipelineCaption,
+  recoveryCaption,
   toolcallCaption,
 } from "@/lib/agent/captions";
+import { HARNESSES } from "@/lib/agent/harnesses";
+import { cacheFrames, permissionFrames } from "@/lib/engine/vendor/views";
 import type { Obj } from "@/lib/engine/vendor/index";
 
 import { ENGINE_TIMEOUT } from "./pages";
@@ -46,8 +54,10 @@ const CASES: {
   chapter: string;
   variant: string;
   view: string;
-  caption: (f: Obj, i: number) => string;
+  caption: (f: Obj, i: number, events: Obj[]) => string;
   choose?: string[];
+  /** Frames computed from the reference's events, when the view is not stored. */
+  frames?: (events: Obj[]) => Obj[];
 }[] = [
   {
     path: "/learn/01-the-agent-loop",
@@ -134,6 +144,79 @@ const CASES: {
     caption: (f) => permissionCaption(f),
     choose: ["ask every time", "no rules"],
   },
+  {
+    path: "/learn/06-sub-agents",
+    id: "subagent-widget",
+    chapter: "subagents",
+    variant: "subagent-roomy",
+    view: "agents",
+    caption: (f) => agentsCaption(f),
+  },
+  {
+    path: "/learn/06-sub-agents",
+    id: "subagent-widget",
+    chapter: "subagents",
+    variant: "inline-tight",
+    view: "agents",
+    caption: (f) => agentsCaption(f),
+    choose: ["inline", "3,000, summarising"],
+  },
+  {
+    path: "/learn/07-hooks-and-sandboxing",
+    id: "hooks-widget",
+    chapter: "hooks",
+    variant: "workspace-hooks",
+    view: "pipeline",
+    caption: (f) => pipelineCaption(f),
+  },
+  {
+    path: "/learn/07-hooks-and-sandboxing",
+    id: "hooks-widget",
+    chapter: "hooks",
+    variant: "read_only-nohooks",
+    view: "pipeline",
+    caption: (f) => pipelineCaption(f),
+    choose: ["read-only", "no hooks"],
+  },
+  {
+    path: "/learn/08-failure-and-recovery",
+    id: "recovery-widget",
+    chapter: "recovery",
+    variant: "r0-stop",
+    view: "events",
+    caption: (f) => recoveryCaption(f),
+    frames: (ev) => ev.filter((e) => RECOVERY_TYPES.has(e.type as string)),
+  },
+  {
+    path: "/learn/08-failure-and-recovery",
+    id: "recovery-widget",
+    chapter: "recovery",
+    variant: "r2-nudge",
+    view: "events",
+    caption: (f) => recoveryCaption(f),
+    frames: (ev) => ev.filter((e) => RECOVERY_TYPES.has(e.type as string)),
+    choose: ["2", "nudge the model"],
+  },
+  {
+    path: "/learn/10-cost-and-latency",
+    id: "cost-widget",
+    chapter: "cost",
+    variant: "fix_test-claude-sonnet-4.6-hosted-cache-auto",
+    view: "cache",
+    caption: (f, i, ev) =>
+      costCaption(f, i, ev.filter((e) => e.type === "model_call")[i]!.dur),
+  },
+  {
+    path: "/learn/10-cost-and-latency",
+    id: "cost-widget",
+    chapter: "cost",
+    variant: "research_subagent-gpt-5-mini-hosted-cache-auto",
+    view: "cache",
+    caption: (f, i, ev) =>
+      costCaption(f, i, ev.filter((e) => e.type === "model_call")[i]!.dur),
+    frames: (ev) => cacheFrames(ev as never),
+    choose: ["notes, sub-agent", "GPT-5 mini"],
+  },
 ];
 
 for (const c of CASES) {
@@ -147,11 +230,39 @@ for (const c of CASES) {
       await change(fig, () =>
         fig.getByRole("radio", { name: label, exact: true }).click(),
       );
-    const frames = CH[c.chapter][c.variant][c.view] as Obj[];
+    const events = CH[c.chapter][c.variant].events as Obj[];
+    const frames = c.frames
+      ? c.frames(events)
+      : (CH[c.chapter][c.variant][c.view] as Obj[]);
     expect(Number(await fig.getByTestId("scrub").getAttribute("max"))).toBe(
       frames.length - 1,
     );
     for (const i of keySteps(frames.length))
-      await frame(fig, i, c.caption(frames[i]!, i));
+      await frame(fig, i, c.caption(frames[i]!, i, events));
   });
 }
+
+test("harnesses-widget: page captions are the reference's, across all six runs", async ({
+  page,
+}) => {
+  await page.goto("/learn/09-harnesses-compared");
+  const fig = page.getByTestId("harnesses-widget");
+  await expect(fig).toBeVisible({ timeout: ENGINE_TIMEOUT });
+  const rows = HARNESSES.map((h) => ({
+    label: h.label,
+    frames: permissionFrames(CH.harnesses[h.key].events as never) as Obj[],
+  }));
+  const n = rows[0]!.frames.length;
+  expect(Number(await fig.getByTestId("scrub").getAttribute("max"))).toBe(
+    n - 1,
+  );
+  for (const i of keySteps(n))
+    await frame(
+      fig,
+      i,
+      harnessCaption(
+        rows.map((r) => ({ label: r.label, f: r.frames[i]! })),
+        i,
+      ),
+    );
+});

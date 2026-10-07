@@ -1,0 +1,70 @@
+<SubagentWidget>
+  <Eq
+    label="The tokens a sub-agent saves are the tokens the inline run sends, minus what the parent sends, minus what the sub-agent sends; the time it costs is the sub-agent's own time"
+    tex="\Delta N = N_{\text{inline}} - \big(\htmlClass{hl-parent}{N_{\text{parent}}} + \htmlClass{hl-child}{N_{\text{child}}}\big), \qquad \Delta T \approx \htmlClass{hl-child}{T_{\text{child}}} - \big(T_{\text{inline}} - \htmlClass{hl-parent}{T_{\text{parent}}}\big)"
+  />
+</SubagentWidget>
+
+<Layer kind="concept">
+
+Everything an agent reads stays in its context, and the whole context is sent again on every later turn ([chapter 1](/learn/01-the-agent-loop)). Reading four long notes to extract five sentences leaves the four notes in the conversation for the rest of the task. A **sub-agent** is the harness's answer: the parent calls a `task` tool with a short prompt; the harness starts a second loop with a **fresh context** (its own system prompt, the tools, the prompt, nothing else); the sub-agent does the reading; and only its final answer comes back to the parent, as that tool call's result.
+
+The animation draws both contexts to one scale. Inline, the parent's context grows with every note it reads and peaks at <V of="subagents.inline-roomy.main.peak" fmt="tokens" />. With a sub-agent, the notes fill the sub-agent's context instead (it peaks at <V of="subagents.subagent-roomy.sub1.peak" fmt="tokens" />), the report it hands back is <V of="subagents.subagent-roomy.summary_tokens" fmt="tokens" />, and the parent never holds more than <V of="subagents.subagent-roomy.main.peak" fmt="tokens" />: about a third of the inline peak. Over the whole run the two agents together send <V of="subagents.subagent-roomy.input_tokens" fmt="tokens" /> to the model, against <V of="subagents.inline-roomy.input_tokens" fmt="tokens" /> inline.
+
+The saving is not free, and here it is not even a saving in money. The sub-agent is another loop, run while the parent waits: the task takes <V of="subagents.subagent-roomy.elapsed" fmt="ms" /> instead of <V of="subagents.inline-roomy.elapsed" fmt="ms" />. And because the inline run re-reads its history from the **prompt cache** ([chapter 4](/learn/04-prompt-caching)) at a tenth of the price, while the sub-agent's fresh context has to be written to the cache first, the run with a sub-agent costs <V of="subagents.subagent-roomy.cost" fmt="usd" /> against <V of="subagents.inline-roomy.cost" fmt="usd" /> inline. Fewer tokens, more money: the cache changes which tokens are expensive.
+
+What a sub-agent really buys is **room**. Switch the window to 3,000 tokens: inline, the parent has to summarise its own history twice to keep going; with a sub-agent, the parent's context never comes near the limit, and only the sub-agent compacts. A parent that keeps a small, clean context makes better decisions for longer; that is why the public harnesses use sub-agents for exploration and side questions, where most of what is read is thrown away.
+
+</Layer>
+
+<Callout kind="illustrative">
+
+The sub-agent is scripted, and its report keeps exactly the five facts the task needs; a real sub-agent's report can drop or distort what the parent needed, and the parent cannot check what it never saw. Prices are list prices (Claude Sonnet 4.6, accessed 2026-10-07) and the hosted model's speed is illustrative.
+
+</Callout>
+
+<Layer kind="maths">
+
+Let $N$ be the tokens sent to the model over a run (every call's whole prompt). Inline, a note of $R$ tokens read on turn $j$ is re-sent on every later turn, so it costs about $R\,(n - j)$ tokens over an $n$-turn run. With a sub-agent, the parent instead carries the report of $S \ll R$ tokens, and the sub-agent pays for its own loop, $N_{\text{child}}$. The saving
+
+$$
+\Delta N = N_{\text{inline}} - (N_{\text{parent}} + N_{\text{child}})
+$$
+
+is positive when the notes would have stayed in the parent's context for many turns: here <V of="subagents.diff-roomy.input_saved" fmt="tokens" />, with the parent's peak context down by <V of="subagents.diff-roomy.peak_saved" fmt="tokens" />. The extra time is the sub-agent's loop, which runs while the parent waits, less the turns the parent no longer takes: here <V of="subagents.diff-roomy.extra_time" fmt="ms" />.
+
+Money follows the price of each token, not their count. Cached tokens cost a tenth of fresh ones and cache writes 1.25 times; a run that re-reads a long, stable history is mostly cache reads, while a new context is mostly writes. With the cache on, the sub-agent here costs <V of="subagents.diff-roomy.extra_cost" fmt="usd" /> more for the same answer.
+
+</Layer>
+
+<Layer kind="code">
+
+The `task` tool, cut from the vendored engine ([`harness.ts`](https://github.com/BrendanJamesLynskey/agent-harnesses-explained/blob/main/src/lib/engine/vendor/harness.ts)): a second loop with its own system prompt and the parent's tools minus `task`, so a sub-agent cannot spawn another one here.
+
+```ts
+const child = `sub${this.spawned}`;
+this.emit("handoff", parent, this.t, { direction: "spawn", child, prompt_tokens: this.tok.count(prompt) });
+const tools = (this.scenario.tools as string[]).filter((n) => n !== "task");
+const sub = this.policy.subagents as Obj;
+const [status, answer, used] = this.loop(child, sub.system, prompt, tools, new ScriptedModel(script), sub.max_turns);
+```
+
+</Layer>
+
+## Sub-agents in the public harnesses
+
+| Harness     | Sub-agents (from their docs, accessed 2026-10-07)                                                                                                                                                                                                                                       |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code | "Each subagent starts with a fresh, isolated context window"; it "does that work in its own context and returns only the summary"; by default a sub-agent can spawn its own, "up to three layers below the main conversation" ([subagents](https://code.claude.com/docs/en/sub-agents)) |
+| Codex CLI   | sub-agents are on by default, and the parent receives "summaries from subagents instead of raw intermediate output" ([subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents))                                                                                         |
+| OpenHands   | a task tool delegates to a sub-agent with its own conversation, which returns its response to the parent ([task tool set](https://docs.openhands.dev/sdk/guides/task-tool-set))                                                                                                         |
+
+All three draw the same line the animation draws: the child's context is its own, and only a summary crosses back. How deep the tree may grow, and whether children run in parallel, differ; [chapter 9](/learn/09-harnesses-compared) compares the rest.
+
+<Callout kind="deeper">
+
+- Coding agents series: [Why Delegate at All?](https://brendanjameslynskey.github.io/CodingAgents_07_Raschka_Subagents_And_Synthesis/#slide-01), [What Context Crosses the Boundary](https://brendanjameslynskey.github.io/CodingAgents_07_Raschka_Subagents_And_Synthesis/#slide-03), [Sandboxing & Recursion Depth](https://brendanjameslynskey.github.io/CodingAgents_07_Raschka_Subagents_And_Synthesis/#slide-04) and the [interactive sub-agent tree](https://brendanjameslynskey.github.io/CodingAgents_07_Raschka_Subagents_And_Synthesis/#slide-07).
+- [Introduction to LangGraph](https://brendanjameslynskey.github.io/Introduction_to_LangGraph/#/9): multi-agent patterns as graphs.
+- The [Agents hub](https://brendanjameslynskey.github.io/LLM_Hub_Agents/) and the [Coding Agents hub](https://brendanjameslynskey.github.io/LLM_Hub_Coding_Agents/).
+
+</Callout>
