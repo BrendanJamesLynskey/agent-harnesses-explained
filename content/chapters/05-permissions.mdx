@@ -61,7 +61,7 @@ if (hits.has("allow")) return ["allow", hits.get("allow")!];
 | Claude Code | permission modes `default` (asks on first use of each tool), `acceptEdits`, `plan` (explores without editing), `auto` (a classifier reviews actions instead of a person), `dontAsk` and `bypassPermissions`; allow, ask and deny rules such as `Bash(rm *)` ([permissions](https://code.claude.com/docs/en/permissions)) |
 | Codex CLI   | approval policies such as `on-request` and `never`, combined with sandbox modes `read-only`, `workspace-write` (the default) and `danger-full-access` ([approvals and security](https://learn.chatgpt.com/docs/agent-approvals-security))                                                                                |
 
-The two take different routes to the same end. Rules decide per call; a **sandbox** limits what any call can reach, whatever the rules say. [Chapter 7](/learn) (hooks and sandboxing, coming next) draws that boundary; the Security site in this family will cover the threats in depth.
+The two take different routes to the same end. Rules decide per call; a **sandbox** limits what any call can reach, whatever the rules say. [Chapter 7](/learn/07-hooks-and-sandboxing) (hooks and sandboxing) draws that boundary; the Security site in this family will cover the threats in depth.
 
 <Callout kind="deeper">
 

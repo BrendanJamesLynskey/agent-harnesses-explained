@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/BrendanJamesLynskey/Agent_Loop_Sim",
-  "commit": "b1b31b65f7c70a62b64dafaed6e5a0068cc15766",
-  "committed": "2026-10-07T14:59:47+01:00",
+  "commit": "05d77209f62c29ab7c6f6d423d9ca91e6c91de7f",
+  "committed": "2026-10-07T16:18:42+01:00",
   "files": {
     "src/lib/engine/vendor/accounting.ts": {
       "from": "ts/src/accounting.ts",
@@ -17,15 +17,15 @@
     },
     "src/lib/engine/vendor/engine_data.json": {
       "from": "ts/src/engine_data.json",
-      "sha256": "2da488c4bd75a19fcac336e6da860882e4d00adabff18fc8dc1d5f81a5b11290"
+      "sha256": "36b3601e99cf272b705731871bc1fb2dae70ae5dad726fa5f3b37e722fa0e6a2"
     },
     "src/lib/engine/vendor/harness.ts": {
       "from": "ts/src/harness.ts",
-      "sha256": "7c0bc14fbb69c5ae294104c7183a4a2a2f21a3d9727ce099d34202c52d0fd577"
+      "sha256": "688c4d2b3c7ba8826583201b87467984464d96ffc2c639a22c1ba5f9d3b6611f"
     },
     "src/lib/engine/vendor/index.ts": {
       "from": "ts/src/index.ts",
-      "sha256": "6c9a5d243935cb5df7ac29b0d29a36cefc361a951d111775d3c81e3e4eb3c8f5"
+      "sha256": "9e8217e902337c6c0dec30ef62550d4463fd8f6400a2a08aa0e8dcbc70edfb82"
     },
     "src/lib/engine/vendor/jsonfmt.ts": {
       "from": "ts/src/jsonfmt.ts",
@@ -33,7 +33,7 @@
     },
     "src/lib/engine/vendor/models.ts": {
       "from": "ts/src/models.ts",
-      "sha256": "36adc77d64b9c8f9d2ad8c7ff8106410a9376d76a2e6696905027228c8d83e44"
+      "sha256": "8ef1efda555e6242e11db91dbaa55e8cef0c5476090527b6f048ec2f2b762424"
     },
     "src/lib/engine/vendor/parse.ts": {
       "from": "ts/src/parse.ts",
@@ -43,17 +43,21 @@
       "from": "ts/src/rng.ts",
       "sha256": "7a31f5f304c80f66d5b58b95213a8e32ed0d3a8da6062b0d9702ad3a9977d296"
     },
+    "src/lib/engine/vendor/sweeps.ts": {
+      "from": "ts/src/sweeps.ts",
+      "sha256": "da0635dab64bca38987bd063f37eae91c94be0133bb8fa4b94ab40b67d9bbcdb"
+    },
     "src/lib/engine/vendor/tokenizer.ts": {
       "from": "ts/src/tokenizer.ts",
       "sha256": "60a2043320c29854dffb85de342fe608bde3d564d50486ed82a08463c7844484"
     },
     "src/lib/engine/vendor/tools.ts": {
       "from": "ts/src/tools.ts",
-      "sha256": "9d91947b5bc800e74b4611fb02cbd8485f3abed20bfc799eb4a998fd87e0d707"
+      "sha256": "1d42f1c15508f67595c3da2c1ea8261b7d2a4acf3fa5419c877aebcd883324ec"
     },
     "src/lib/engine/vendor/views.ts": {
       "from": "ts/src/views.ts",
-      "sha256": "ea095eb223ea8edac2cb7f0b541ea7a4a4c4a222ffb2cb975ec9f89044427714"
+      "sha256": "0d1be7ee567f3d17b20bf75b854246ba4a46857b0143401262f4f9097491f798"
     },
     "public/tokenizer/qwen2.5-merges.txt": {
       "from": "src/agent_loop_sim/data/qwen2.5-merges.txt",
@@ -77,7 +81,7 @@
     },
     "tests/fixtures/engine_fixtures.json": {
       "from": "fixtures/engine_fixtures.json",
-      "sha256": "e061bf318df34a3f572bc9d27a51fc4b13cd548a24e247632681c2d252b99e3c"
+      "sha256": "060afdd72731c72d5882f1e705475a1b1edcc190fdbfda8ceb7388d22b0ec67a"
     }
   }
 }

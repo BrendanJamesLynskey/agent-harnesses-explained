@@ -89,10 +89,6 @@ export default function HomePage(): JSX.Element {
           </Link>
         ))}
       </nav>
-      <p className="mt-6 text-sm text-neutral-600 dark:text-neutral-400">
-        Coming next: sub-agents, hooks and sandboxing, failure and recovery, the
-        public harnesses compared, and the full cost and latency of a task.
-      </p>
       <p className="mt-12 text-sm text-neutral-600 dark:text-neutral-400">
         The first of a family of agent sites, alongside the LLM-systems sites:
         the{" "}

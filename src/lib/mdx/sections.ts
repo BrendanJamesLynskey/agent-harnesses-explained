@@ -41,6 +41,36 @@ export const SECTIONS = [
     summary:
       "Allow, ask and deny rules evaluated against every call; each question to the human adds their thinking time to the run.",
   },
+  {
+    slug: "06-sub-agents",
+    title: "Sub-agents",
+    summary:
+      "A parent hands a sub-task to a child with a fresh context and gets a short report back: a smaller context for the parent, paid for in the child's tokens and in time.",
+  },
+  {
+    slug: "07-hooks-and-sandboxing",
+    title: "Hooks and sandboxing",
+    summary:
+      "Hooks intercept every call before and after it runs; a sandbox bounds what a shell command can reach, whatever the rules allowed.",
+  },
+  {
+    slug: "08-failure-and-recovery",
+    title: "Failure and recovery",
+    summary:
+      "Tools fail: retries with back-off, errors fed back to the model, and loop detection, with the success rate against the retry budget from seeded runs.",
+  },
+  {
+    slug: "09-harnesses-compared",
+    title: "Harnesses compared",
+    summary:
+      "How Claude Code, Codex CLI, Aider, OpenHands, SWE-agent and mini-SWE-agent make each choice, from their docs, and the same task under a policy imitation of each.",
+  },
+  {
+    slug: "10-cost-and-latency",
+    title: "Cost and latency of a task",
+    summary:
+      "Tokens per turn, the cache, output speed and human waits: the full arithmetic of a task, with a live calculator driven by the engine.",
+  },
 ] as const;
 
 export type SectionSlug = (typeof SECTIONS)[number]["slug"];

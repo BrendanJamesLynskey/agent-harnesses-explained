@@ -5,7 +5,7 @@
 
 For every run a chapter animates (src/data/chapter_configs.json: a scenario and a policy, or
 a recorded trace), the reference engine's events and the animation frames derived from
-them. tests/unit/frames.test.ts runs the same configurations with the vendored TS port and
+them; and every seeded sweep a chapter charts (src/data/sweep_configs.json). tests/unit/frames.test.ts runs the same configurations with the vendored TS port and
 requires identical frames; tests/e2e/frames.spec.ts checks the captions on the page.
 
 The engine must be installed from git at the commit in src/lib/engine/vendor/VENDORED.json
@@ -22,6 +22,7 @@ from pathlib import Path
 from agent_loop_sim import views
 from agent_loop_sim.harness import replay_trace, run
 from agent_loop_sim.scenarios import scenario
+from agent_loop_sim.sweeps import retry_sweep
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "tests/fixtures/site_fixtures.json"
@@ -60,7 +61,16 @@ def build() -> str:
                 "cache": views.cache_frames(ev),
                 "permission": views.permission_frames(ev),
                 "timeline": views.timeline(ev),
+                "agents": views.agents_frames(ev),
+                "pipeline": views.pipeline_frames(ev),
             }
+    sweeps = json.loads((ROOT / "src/data/sweep_configs.json").read_text())
+    out["sweeps"] = {}
+    for name, sw in sweeps.items():
+        out["sweeps"][name] = {
+            key: retry_sweep(sw["scenario"], sw["budgets"], list(range(sw["seeds"])), pol)
+            for key, pol in sw["policies"].items()
+        }
     return json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 

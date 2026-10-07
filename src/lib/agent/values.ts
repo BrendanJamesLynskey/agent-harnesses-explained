@@ -12,12 +12,17 @@ import {
   DEFAULT_POLICY,
   LATENCY,
   PRICES,
+  SCENARIOS,
   TRACES,
+  SWEEP_CONFIGS,
   cacheFrames,
   runChapter,
+  runSweep,
+  verified,
   type Chapter,
   type Ev,
   type Obj,
+  type SweepName,
 } from "@/lib/engine";
 import { nodeTokenizer } from "@/lib/engine/node";
 import { fmtInt, fmtMs, fmtUsd, pct, trim } from "@/lib/format";
@@ -59,8 +64,34 @@ export function summarise(ev: Ev[]): Obj {
         (ev[errAt]!.message_tokens as number)) *
       later;
   }
+  // per agent: tokens sent to the model, peak context, model time
+  const agent = (a: string) => {
+    const calls = ev.filter((e) => e.type === "model_call" && e.agent === a);
+    const act = calls.filter((e) => e.purpose === "act");
+    return {
+      input: calls.reduce((x, e) => x + (e.input_tokens as number), 0),
+      cost: calls.reduce((x, e) => x + (e.cost as number), 0),
+      peak: act.length
+        ? Math.max(...act.map((e) => e.input_tokens as number))
+        : 0,
+      busy: calls.reduce((x, e) => x + (e.dur as number), 0),
+      turns: act.length,
+    };
+  };
+  const ret = ev.find((e) => e.type === "handoff" && e.direction === "return");
+  const spawn = ev.find((e) => e.type === "handoff" && e.direction === "spawn");
+  const results = ev.filter((e) => e.type === "tool_result");
   return {
     ...bad,
+    main: agent("main"),
+    sub1: agent("sub1"),
+    child_tokens: ret ? ret.child_tokens : 0,
+    summary_tokens: ret ? ret.summary_tokens : 0,
+    spawn_prompt_tokens: spawn ? spawn.prompt_tokens : 0,
+    sub_elapsed: ret && spawn ? (ret.t as number) - (spawn.t as number) : 0,
+    sandboxed: results.filter((e) => e.kind === "sandboxed").length,
+    hooks: ev.filter((e) => e.type === "hook").length,
+    verified: verified(ev) ? "yes" : "no",
     status: end.status,
     elapsed: end.elapsed,
     ...end.totals,
@@ -81,6 +112,17 @@ export function summarise(ev: Ev[]): Obj {
 }
 
 let TREE: Obj | null = null;
+const SWEEPS = new Map<SweepName, Record<string, Obj[]>>();
+
+/** A seeded sweep, computed once on the server (chapter 8's chart). */
+export function serverSweep(name: SweepName): Record<string, Obj[]> {
+  let r = SWEEPS.get(name);
+  if (!r) {
+    r = runSweep(name, nodeTokenizer());
+    SWEEPS.set(name, r);
+  }
+  return r;
+}
 const RUNS = new Map<Chapter, Record<string, Ev[]>>();
 
 /** A chapter's runs, computed once on the server (for static pictures). */
@@ -112,6 +154,42 @@ function tree(): Obj {
       t.toolcall.native.input_tokens - t.toolcall.native_clean.input_tokens,
     react: t.toolcall.react.input_tokens - t.toolcall.react_clean.input_tokens,
   };
+  // seeded sweeps, by policy key and retry budget (rows in budget order)
+  t.sweeps = {};
+  for (const name of Object.keys(SWEEP_CONFIGS) as SweepName[])
+    t.sweeps[name] = serverSweep(name);
+  // chapter 8: the analytic model beside the sweep. Each shell attempt fails with
+  // probability p (the scenario's fail rate); a call fails after r retries with q = p^(r+1);
+  // the scripted model repeats a failed call, and three identical calls in a row are a loop,
+  // so one test step is lost only if two calls in a row fail: the run (two test steps)
+  // succeeds with (1 - q^2)^2. Worst-case back-off: b (f^r - 1) / (f - 1).
+  {
+    const p = (SCENARIOS.fix_test_flaky!.fail_rates as Obj).run_shell as number;
+    const rec = DEFAULT_POLICY.recovery as Obj;
+    t.recovery.model = { p };
+    for (const r of SWEEP_CONFIGS.recovery.budgets) {
+      const q = p ** (r + 1);
+      t.recovery.model[r] = {
+        call: 1 - q,
+        run: (1 - q * q) ** 2,
+        backoff:
+          (rec.backoff_ms * (rec.backoff_factor ** r - 1)) /
+          (rec.backoff_factor - 1),
+      };
+    }
+  }
+  // chapter 6: what the sub-agent saved and what it cost
+  for (const w of ["roomy", "tight"]) {
+    const a = t.subagents[`inline-${w}`];
+    const b = t.subagents[`subagent-${w}`];
+    t.subagents[`diff-${w}`] = {
+      peak_saved: a.main.peak - b.main.peak,
+      peak_ratio: b.main.peak / a.main.peak,
+      input_saved: a.input_tokens - b.input_tokens,
+      extra_time: b.elapsed - a.elapsed,
+      extra_cost: b.cost - a.cost,
+    };
+  }
   for (const [id, tr] of Object.entries(TRACES))
     t.traces[id] = {
       calls: (tr.calls as Obj[]).length,

@@ -42,9 +42,10 @@ export default function AboutPage(): JSX.Element {
         <p>
           Agent Harnesses Explained takes apart the program that turns a chat
           model into an agent: the loop, the tool calls, the context budget,
-          prompt caching and permissions, one chapter each, each around an
-          animation. It is the first of a family of agent sites, next to the
-          LLM-systems sites (the{" "}
+          prompt caching, permissions, sub-agents, hooks and sandboxing, failure
+          and recovery, the public harnesses compared, and the cost and latency
+          of a task, one chapter each, each around an animation. It is the first
+          of a family of agent sites, next to the LLM-systems sites (the{" "}
           <a href={DECODER_URL} className={A}>
             Transformer Decoder Explainer
           </a>
@@ -136,7 +137,10 @@ export default function AboutPage(): JSX.Element {
             simulated human&apos;s answer times; the prompt-cache model (a
             simple prefix model of the providers&apos; documented rules); the
             scripted policies and the scripted summariser; the tiny context
-            windows of chapter 3. Every chapter marks these.
+            windows of chapter 3; chapter 7&apos;s command-line sandbox; chapter
+            8&apos;s tool failure rate; chapter 9&apos;s harness imitations,
+            which are a policy imitation, not the product. Every chapter marks
+            these.
           </li>
           <li>
             Costs combine Qwen2.5 token counts with other providers&apos; list
