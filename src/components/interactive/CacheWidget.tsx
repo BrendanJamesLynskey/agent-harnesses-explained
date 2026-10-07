@@ -57,6 +57,7 @@ export default function CacheWidget({
 }): JSX.Element {
   const engine = useEngine("cache");
   const [layout, setLayout] = useState<Layout>("stable");
+  const [hover, setHover] = useState<string | null>(null);
   const [priceKey, setPriceKey] = useState<PriceKey>("claude-sonnet-4.6");
   const font = useSvgFont(CW);
   const fs = font.fs;
@@ -129,6 +130,7 @@ export default function CacheWidget({
                     style={{
                       width: `${100 * (x.hit as number)}%`,
                       backgroundColor: READ,
+                      opacity: hover === "write" ? 0.3 : 1,
                     }}
                     className="h-full"
                   />
@@ -136,6 +138,7 @@ export default function CacheWidget({
                     className="h-full flex-1"
                     style={{
                       backgroundColor: stored ? FRESH : "#a3a3a3",
+                      opacity: hover === "read" || hover === "hit" ? 0.3 : 1,
                       backgroundImage: HATCH_CSS,
                     }}
                   />
@@ -273,7 +276,8 @@ export default function CacheWidget({
       visual={visual}
       stats={stats}
       equation={children}
-      hl={hl}
+      hl={hover ?? hl}
+      onEquationHover={setHover}
       params={
         <>
           <Segmented

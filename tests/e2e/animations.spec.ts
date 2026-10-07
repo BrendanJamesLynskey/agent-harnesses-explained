@@ -173,3 +173,20 @@ test.describe("phone labels", () => {
     });
   }
 });
+
+test("hovering an equation term highlights what it stands for in the picture", async ({
+  page,
+}) => {
+  await page.goto("/learn/01-the-agent-loop");
+  const fig = page.getByTestId("loop-widget");
+  await expect(fig).toBeVisible({ timeout: ENGINE_TIMEOUT });
+  await fig.locator(".eq-panel .hl-tools").first().hover();
+  await expect(fig.locator(".eq-panel")).toHaveAttribute("data-hl", "tools");
+  const opacity = (kind: string) =>
+    fig
+      .locator(`[data-kind="${kind}"]`)
+      .first()
+      .evaluate((e) => getComputedStyle(e).opacity);
+  expect(await opacity("tools")).toBe("1");
+  expect(await opacity("system")).toBe("0.3");
+});

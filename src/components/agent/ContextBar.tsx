@@ -18,6 +18,7 @@ export function ContextBar({
   height = 28,
   label,
   marks = [],
+  focus,
 }: {
   parts: Part[];
   max: number;
@@ -27,6 +28,8 @@ export function ContextBar({
   label: string;
   /** Vertical lines at token positions (e.g. the window, the compaction trigger). */
   marks?: { at: number; label: string; colour: string; dashed?: boolean }[];
+  /** Kinds to emphasise (the equation term under the pointer); the rest are dimmed. */
+  focus?: string[];
 }): JSX.Element {
   const total = parts.reduce((s, p) => s + p.tokens, 0);
   return (
@@ -53,6 +56,7 @@ export function ContextBar({
                   backgroundImage: HATCHED_KINDS.has(p.kind)
                     ? HATCH_CSS
                     : undefined,
+                  opacity: focus && !focus.includes(p.kind) ? 0.3 : 1,
                 }}
               />
             );

@@ -70,6 +70,7 @@ export default function ToolCallWidget({
 }): JSX.Element {
   const engine = useEngine("toolcall");
   const [style, setStyle] = useState<Style>("native");
+  const [hover, setHover] = useState<string | null>(null);
   const events: Ev[] = useMemo(
     () => (engine.status === "ready" ? engine.runs[style]! : []),
     [engine, style],
@@ -113,7 +114,9 @@ export default function ToolCallWidget({
       <Box
         title="1 · The model writes"
         colour={LANE_COLOUR.model!}
-        active={f.phase === "emit" || f.phase === "final"}
+        active={
+          f.phase === "emit" || f.phase === "final" || hover === "assistant"
+        }
         muted={false}
         testId="tc-emit"
       >
@@ -132,7 +135,9 @@ export default function ToolCallWidget({
       <Box
         title="2 · The harness parses"
         colour={KIND_COLOUR.system!}
-        active={f.phase === "parse" || f.phase === "malformed"}
+        active={
+          f.phase === "parse" || f.phase === "malformed" || hover === "result"
+        }
         muted={stale(parsed)}
         testId="tc-parse"
       >
@@ -234,7 +239,8 @@ export default function ToolCallWidget({
       visual={visual}
       stats={stats}
       equation={children}
-      hl={hl}
+      hl={hover ?? hl}
+      onEquationHover={setHover}
       params={
         <Segmented
           label="Style"

@@ -41,6 +41,15 @@ const NOTE: Record<Source, string> = {
     "Recorded. Two good searches in one turn (parallel calls), then no calculator: wrong arithmetic in prose, cut off at the 384-token output limit.",
 };
 
+/** Equation term -> the parts of the context it stands for. */
+const HOVER_KINDS: Record<string, string[]> = {
+  system: ["system"],
+  tools: ["tools"],
+  task: ["task"],
+  assistant: ["assistant"],
+  result: ["tool_result", "observation"],
+};
+
 const W = 360;
 const NODE = { model: 8, harness: 135, tools: 262 } as const;
 const NODE_W = 90;
@@ -90,6 +99,7 @@ export default function LoopWidget({
 }): JSX.Element {
   const engine = useEngine("loop");
   const [source, setSource] = useState<Source>("scripted");
+  const [hover, setHover] = useState<string | null>(null);
   const font = useSvgFont(W);
   const fs = font.fs;
 
@@ -311,6 +321,7 @@ export default function LoopWidget({
           max={max}
           grow={grow}
           label="Context window"
+          focus={hover ? HOVER_KINDS[hover] : undefined}
         />
         <KindLegend kinds={kinds} />
       </div>
@@ -354,7 +365,8 @@ export default function LoopWidget({
       visual={visual}
       stats={stats}
       equation={children}
-      hl={hl}
+      hl={hover ?? hl}
+      onEquationHover={setHover}
       params={
         <Segmented
           label="Run"

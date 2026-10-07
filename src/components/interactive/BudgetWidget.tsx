@@ -55,6 +55,7 @@ export default function BudgetWidget({
 }): JSX.Element {
   const engine = useEngine("budget");
   const [strategy, setStrategy] = useState<Strategy>("summarise");
+  const [hover, setHover] = useState<string | null>(null);
   const [win, setWin] = useState<Win>("3000");
   const font = useSvgFont(W);
   const fs = font.fs;
@@ -118,7 +119,7 @@ export default function BudgetWidget({
           width={W - PAD_L}
           height={y(wnd - (f.reserve as number)) - y(wnd)}
           fill="url(#budget-reserve)"
-          opacity={0.6}
+          opacity={hover === "reserve" ? 1 : 0.6}
         />
         <line
           x1={PAD_L}
@@ -126,7 +127,7 @@ export default function BudgetWidget({
           y1={y(wnd)}
           y2={y(wnd)}
           className="stroke-neutral-800 dark:stroke-neutral-200"
-          strokeWidth={1.5}
+          strokeWidth={hover === "window" ? 3.5 : 1.5}
         />
         <text
           x={W - 2}
@@ -144,7 +145,7 @@ export default function BudgetWidget({
           y2={y(f.trigger as number)}
           stroke={STATE_COLOUR.stalled}
           strokeDasharray="5 3"
-          strokeWidth={1.5}
+          strokeWidth={hover === "trigger" ? 3.5 : 1.5}
         />
         <text
           x={W - 2}
@@ -312,7 +313,8 @@ export default function BudgetWidget({
       visual={visual}
       stats={stats}
       equation={children}
-      hl={hl}
+      hl={hover ?? hl}
+      onEquationHover={setHover}
       params={
         <>
           <Segmented

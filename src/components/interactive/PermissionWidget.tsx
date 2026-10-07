@@ -59,6 +59,12 @@ const DECISION_COLOUR: Record<string, string> = {
 };
 
 const LANES = ["model", "human", "tool"] as const;
+/** Equation term -> its timeline lane. */
+const LANE_OF: Record<string, string> = {
+  model: "model",
+  tool: "tool",
+  wait: "human",
+};
 
 function summaryOf(ev: Ev[]): Obj {
   const end = ev[ev.length - 1]!;
@@ -80,6 +86,7 @@ export default function PermissionWidget({
 }): JSX.Element {
   const engine = useEngine("permissions");
   const [mode, setMode] = useState<Mode>("default");
+  const [hover, setHover] = useState<string | null>(null);
   const [rules, setRules] = useState<Rules>("rule");
   const key = `${mode}-${rules}`;
   const events = useMemo(
@@ -222,6 +229,7 @@ export default function PermissionWidget({
             <div
               className="relative h-4 min-w-0 flex-1 rounded-sm bg-neutral-100 dark:bg-neutral-900"
               data-lane={lane}
+              style={{ opacity: hover && LANE_OF[hover] !== lane ? 0.3 : 1 }}
             >
               {spans
                 .filter((s) => s.lane === lane)
@@ -332,7 +340,8 @@ export default function PermissionWidget({
       visual={visual}
       stats={stats}
       equation={children}
-      hl={hl}
+      hl={hover ?? hl}
+      onEquationHover={setHover}
       params={
         <>
           <Segmented
