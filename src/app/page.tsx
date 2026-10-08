@@ -10,6 +10,7 @@ import {
   INFERENCE_URL,
   KERNELS_URL,
   NUMERICS_URL,
+  PROTOCOLS_URL,
   SILICON_URL,
   TRADEOFFS_URL,
 } from "@/lib/site";
@@ -90,8 +91,11 @@ export default function HomePage(): JSX.Element {
         ))}
       </nav>
       <p className="mt-12 text-sm text-neutral-600 dark:text-neutral-400">
-        The first of a family of agent sites, alongside the LLM-systems sites:
-        the{" "}
+        The first of a family of agent sites, followed by{" "}
+        <a href={PROTOCOLS_URL} className={LINK}>
+          Agent Protocols Explained
+        </a>
+        , alongside the LLM-systems sites: the{" "}
         <a href={DECODER_URL} className={LINK}>
           Transformer Decoder Explainer
         </a>
