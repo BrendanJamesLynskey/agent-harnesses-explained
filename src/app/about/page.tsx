@@ -9,6 +9,7 @@ import VENDORED from "@/lib/engine/vendor/VENDORED.json";
 import {
   AGENTS_HUB,
   CODING_AGENTS_HUB,
+  CONTEXT_URL,
   DECODER_URL,
   ENGINE_URL,
   GITHUB_URL,
@@ -50,8 +51,12 @@ export default function AboutPage(): JSX.Element {
           <a href={PROTOCOLS_URL} className={A}>
             Agent Protocols Explained
           </a>
-          , follows the same tool calls onto the wire), next to the LLM-systems
-          sites (the{" "}
+          , follows the same tool calls onto the wire; the third,{" "}
+          <a href={CONTEXT_URL} className={A}>
+            Agent Context Explained
+          </a>
+          , what goes into the window and how an agent remembers beyond it),
+          next to the LLM-systems sites (the{" "}
           <a href={DECODER_URL} className={A}>
             Transformer Decoder Explainer
           </a>

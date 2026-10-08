@@ -20,7 +20,8 @@ Part of a family of companion sites. LLM systems: the
 [Numerics Explained](https://numerics-explained.vercel.app),
 [Systolic Arrays Explained](https://systolic-arrays-explained.vercel.app) and
 [Inference Trade-offs Explained](https://inference-tradeoffs-explained.vercel.app). Agents: this is the first, then
-[Agent Protocols Explained](https://agent-protocols-explained.vercel.app).
+[Agent Protocols Explained](https://agent-protocols-explained.vercel.app) and
+[Agent Context Explained](https://agent-context-explained.vercel.app).
 
 ## Chapters
 
