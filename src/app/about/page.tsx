@@ -14,6 +14,7 @@ import {
   GITHUB_URL,
   INFERENCE_URL,
   KERNELS_URL,
+  PROTOCOLS_URL,
   TRADEOFFS_URL,
   repoFile,
 } from "@/lib/site";
@@ -45,7 +46,12 @@ export default function AboutPage(): JSX.Element {
           prompt caching, permissions, sub-agents, hooks and sandboxing, failure
           and recovery, the public harnesses compared, and the cost and latency
           of a task, one chapter each, each around an animation. It is the first
-          of a family of agent sites, next to the LLM-systems sites (the{" "}
+          of a family of agent sites (the second,{" "}
+          <a href={PROTOCOLS_URL} className={A}>
+            Agent Protocols Explained
+          </a>
+          , follows the same tool calls onto the wire), next to the LLM-systems
+          sites (the{" "}
           <a href={DECODER_URL} className={A}>
             Transformer Decoder Explainer
           </a>
