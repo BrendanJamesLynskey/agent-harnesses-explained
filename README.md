@@ -12,17 +12,19 @@ replayed token for token.
 
 ![The agent loop: the model, the harness and the tools, with the context window filling on every turn](docs/media/agent-loop.gif)
 
-Part of a family of companion sites. LLM systems: the
+Part of a family of companion sites. Inference: the
 [Transformer Decoder Explainer](https://transformer-decoder-explained.vercel.app),
 [LLM Inference Explained](https://llm-inference-explained.vercel.app),
 [LLM Architectures Explained](https://llm-architectures-explained.vercel.app),
 [GPU Kernels Explained](https://gpu-kernels-explained.vercel.app),
 [Numerics Explained](https://numerics-explained.vercel.app),
 [Systolic Arrays Explained](https://systolic-arrays-explained.vercel.app),
-[Inference Trade-offs Explained](https://inference-tradeoffs-explained.vercel.app) and the
-[Compute in Transit results](https://compute-in-transit-results.vercel.app). Agents: this is the first, then
-[Agent Protocols Explained](https://agent-protocols-explained.vercel.app) and
-[Agent Context Explained](https://agent-context-explained.vercel.app).
+[Inference Trade-offs Explained](https://inference-tradeoffs-explained.vercel.app). Training: the
+[Compute in Transit results](https://compute-in-transit-results.vercel.app), with Training (the second part of the
+decoder site) to come. Agents: this is the first, then
+[Agent Protocols Explained](https://agent-protocols-explained.vercel.app),
+[Agent Context Explained](https://agent-context-explained.vercel.app) and
+[Agent Orchestration Explained](https://agent-orchestration-explained.vercel.app).
 
 ## Chapters
 
@@ -95,12 +97,12 @@ reproduce every event and every animation frame exactly.
 
 ## Checks
 
-| Check                                                                                                                                                                                                  | Where                                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| Python reference regenerates the site's fixtures; vendored hashes; traces replay                                                                                                                       | CI "Model and fixtures" (`scripts/make_fixtures.py --check`, `tests/python`) |
-| TS engine = Python reference on every run, frame and seeded sweep; captions; chapters' code, equations, links, values; every matrix cell sourced or marked inferred                                    | CI "Unit Tests" (`tests/unit`)                                               |
-| Every page at 1,280 and 390 px, light and dark: no errors, no overflow; every animation plays, steps, scrubs, resets, keys; reduced motion; frame captions on the page; axe; the two-group site switch | CI "E2E Tests" (`tests/e2e`)                                                 |
-| Lighthouse ≥ 0.9 (performance, accessibility, best practices)                                                                                                                                          | CI "Lighthouse"                                                              |
+| Check                                                                                                                                                                                                    | Where                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Python reference regenerates the site's fixtures; vendored hashes; traces replay                                                                                                                         | CI "Model and fixtures" (`scripts/make_fixtures.py --check`, `tests/python`) |
+| TS engine = Python reference on every run, frame and seeded sweep; captions; chapters' code, equations, links, values; every matrix cell sourced or marked inferred                                      | CI "Unit Tests" (`tests/unit`)                                               |
+| Every page at 1,280 and 390 px, light and dark: no errors, no overflow; every animation plays, steps, scrubs, resets, keys; reduced motion; frame captions on the page; axe; the three-group site switch | CI "E2E Tests" (`tests/e2e`)                                                 |
+| Lighthouse ≥ 0.9 (performance, accessibility, best practices)                                                                                                                                            | CI "Lighthouse"                                                              |
 
 ## Develop
 

@@ -11,6 +11,7 @@ import {
   INFERENCE_URL,
   KERNELS_URL,
   NUMERICS_URL,
+  ORCHESTRATION_URL,
   PROTOCOLS_URL,
   SILICON_URL,
   TRADEOFFS_URL,
@@ -95,10 +96,14 @@ export default function HomePage(): JSX.Element {
         The first of a family of agent sites, followed by{" "}
         <a href={PROTOCOLS_URL} className={LINK}>
           Agent Protocols Explained
-        </a>{" "}
-        and{" "}
+        </a>
+        ,{" "}
         <a href={CONTEXT_URL} className={LINK}>
           Agent Context Explained
+        </a>{" "}
+        and{" "}
+        <a href={ORCHESTRATION_URL} className={LINK}>
+          Agent Orchestration Explained
         </a>
         , alongside the LLM-systems sites: the{" "}
         <a href={DECODER_URL} className={LINK}>

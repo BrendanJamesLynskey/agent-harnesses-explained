@@ -15,6 +15,7 @@ import {
   GITHUB_URL,
   INFERENCE_URL,
   KERNELS_URL,
+  ORCHESTRATION_URL,
   PROTOCOLS_URL,
   TRADEOFFS_URL,
   repoFile,
@@ -55,8 +56,13 @@ export default function AboutPage(): JSX.Element {
           <a href={CONTEXT_URL} className={A}>
             Agent Context Explained
           </a>
-          , what goes into the window and how an agent remembers beyond it),
-          next to the LLM-systems sites (the{" "}
+          , what goes into the window and how an agent remembers beyond it; the
+          fourth,{" "}
+          <a href={ORCHESTRATION_URL} className={A}>
+            Agent Orchestration Explained
+          </a>
+          , graphs, multi-agent patterns and durable execution), next to the
+          LLM-systems sites (the{" "}
           <a href={DECODER_URL} className={A}>
             Transformer Decoder Explainer
           </a>
