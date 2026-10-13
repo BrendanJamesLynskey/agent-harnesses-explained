@@ -25,8 +25,9 @@ Inference: Serving,
 [Numerics Explained](https://numerics-explained.vercel.app),
 [Inference Trade-offs Explained](https://inference-tradeoffs-explained.vercel.app). Agents: this is the first, then
 [Agent Protocols Explained](https://agent-protocols-explained.vercel.app),
-[Agent Context Explained](https://agent-context-explained.vercel.app) and
-[Agent Orchestration Explained](https://agent-orchestration-explained.vercel.app).
+[Agent Context Explained](https://agent-context-explained.vercel.app),
+[Agent Orchestration Explained](https://agent-orchestration-explained.vercel.app) and
+[Agent Evals Explained](https://agent-evals-explained.vercel.app).
 
 ## Chapters
 
