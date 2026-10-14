@@ -8,6 +8,7 @@ import { formatValue, lookup } from "@/lib/agent/values";
 import VENDORED from "@/lib/engine/vendor/VENDORED.json";
 import {
   AGENTS_HUB,
+  AUTHOR,
   CODING_AGENTS_HUB,
   CONTEXT_URL,
   DECODER_URL,
@@ -208,6 +209,15 @@ export default function AboutPage(): JSX.Element {
           .
         </p>
       </div>
+      <p
+        className="mt-12 text-sm text-neutral-600 dark:text-neutral-400"
+        data-author-credit
+      >
+        Written and built by{" "}
+        <a className={A} href={AUTHOR.url}>
+          {AUTHOR.name}
+        </a>
+      </p>
     </main>
   );
 }
