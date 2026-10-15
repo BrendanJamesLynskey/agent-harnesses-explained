@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s · Agent Harnesses Explained",
   },
   description:
-    "What sits between a model and the world: the agent loop, tool calls, the context budget, prompt caching and permissions, each animated by a tested agent-loop simulator replaying recorded traces.",
+    "What sits between a model and the world: the agent loop, tool calls, the context budget, prompt caching, permissions, sub-agents, hooks and sandboxing, failure and recovery, harnesses compared, and cost and latency, each animated by a tested agent-loop simulator replaying recorded traces.",
 };
 
 export default function RootLayout({
