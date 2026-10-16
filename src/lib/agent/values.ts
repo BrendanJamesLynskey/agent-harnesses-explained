@@ -81,6 +81,12 @@ export function summarise(ev: Ev[]): Obj {
   const ret = ev.find((e) => e.type === "handoff" && e.direction === "return");
   const spawn = ev.find((e) => e.type === "handoff" && e.direction === "spawn");
   const results = ev.filter((e) => e.type === "tool_result");
+  // chapter 10: the share of the cost that is output (answers and, with thinking, reasoning)
+  const price = PRICES[(ev[0]!.policy as Obj).cache.price as string]!;
+  const thinking = (end.totals.thinking_tokens as number | undefined) ?? 0;
+  const outCost =
+    (((end.totals.output_tokens as number) + thinking) * price.output) / 1e6;
+  const cost = end.totals.cost as number;
   return {
     ...bad,
     main: agent("main"),
@@ -108,6 +114,9 @@ export function summarise(ev: Ev[]): Obj {
     saving: 1 - (last.cum as number) / (last.cum_plain as number),
     facts_lost: lost.length,
     facts_lost_list: lost.join(", "),
+    thinking_tokens: thinking,
+    output_cost_share: cost > 0 ? outCost / cost : 0,
+    input_cost_share: cost > 0 ? 1 - outCost / cost : 0,
   };
 }
 
@@ -179,7 +188,12 @@ function tree(): Obj {
     }
   }
   // chapter 6: what the sub-agent saved and what it cost
-  for (const w of ["roomy", "tight"]) {
+  for (const w of [
+    "roomy",
+    "tight",
+    "roomy@claude-sonnet-5.5",
+    "tight@claude-sonnet-5.5",
+  ]) {
     const a = t.subagents[`inline-${w}`];
     const b = t.subagents[`subagent-${w}`];
     t.subagents[`diff-${w}`] = {
