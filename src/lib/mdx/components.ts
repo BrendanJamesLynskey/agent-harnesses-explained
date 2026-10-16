@@ -22,6 +22,7 @@ import { Eq } from "@/components/mdx/Eq";
 import { V } from "@/components/mdx/V";
 import { Callout } from "@/components/ui/Callout";
 import { HarnessMatrix } from "@/components/viz/HarnessMatrix";
+import { PriceTable } from "@/components/viz/PriceTable";
 import { SweepChart } from "@/components/viz/SweepChart";
 import { MdxPre, MdxTable } from "@/components/ui/MdxTable";
 
@@ -43,5 +44,6 @@ export const mdxComponents: NonNullable<MDXRemoteProps["components"]> = {
   SweepChart,
   HarnessesWidget,
   HarnessMatrix,
+  PriceTable,
   CostWidget,
 };

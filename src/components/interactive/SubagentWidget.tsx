@@ -37,7 +37,12 @@ const WINDOWS = [
   { value: "roomy", label: "32,768 tokens" },
   { value: "tight", label: "3,000, summarising" },
 ] as const;
+const PRICES_AT = [
+  { value: "", label: "Sonnet 4.6" },
+  { value: "@claude-sonnet-5.5", label: "Sonnet 5.5" },
+] as const;
 type Setup = (typeof SETUPS)[number]["value"];
+type At = (typeof PRICES_AT)[number]["value"];
 type Win = (typeof WINDOWS)[number]["value"];
 
 const LANES: Lane[] = [
@@ -89,8 +94,10 @@ export default function SubagentWidget({
   const engine = useEngine("subagents");
   const [setup, setSetup] = useState<Setup>("subagent");
   const [win, setWin] = useState<Win>("roomy");
+  const [at, setAt] = useState<At>("");
   const [hover, setHover] = useState<string | null>(null);
-  const key = `${setup}-${win}`;
+  // the same runs priced on two generations (chapter_configs.json: "<setup>-<window>@<price>")
+  const key = `${setup}-${win}${at}`;
   const events = useMemo(
     () => (engine.status === "ready" ? engine.runs[key]! : []),
     [engine, key],
@@ -232,7 +239,7 @@ export default function SubagentWidget({
         </thead>
         <tbody className="font-mono">
           {SETUPS.map((s) => {
-            const x = summaryOf(engine.runs[`${s.value}-${win}`]!);
+            const x = summaryOf(engine.runs[`${s.value}-${win}${at}`]!);
             return (
               <tr
                 key={s.value}
@@ -294,6 +301,12 @@ export default function SubagentWidget({
             value={win}
             options={WINDOWS}
             onChange={setWin}
+          />
+          <Segmented
+            label="Prices"
+            value={at}
+            options={PRICES_AT}
+            onChange={setAt}
           />
         </>
       }

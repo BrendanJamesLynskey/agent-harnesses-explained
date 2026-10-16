@@ -1,7 +1,8 @@
 /**
  * Chapter 10's arithmetic: a run's cost and time taken apart, call by call, from the
  * engine's events. Cost per model call = fresh prompt tokens at the input (or cache-write)
- * price + cached tokens at the cache-read price + output tokens at the output price; time
+ * price + cached tokens at the cache-read price + output tokens at the output price (and,
+ * with the engine's `thinking` policy, reasoning tokens at the output price too); time
  * = each call's time to first token and decode time, the tools' time, the human's waits
  * and the retry back-offs. Pure functions of the events (tests/unit/cost.test.ts checks
  * the parts add up to the engine's own totals).
@@ -14,10 +15,12 @@ export type CallCost = {
   fresh: number;
   cached: number;
   output: number;
-  /** US dollars: fresh tokens (input or cache-write price), cached reads, output. */
+  thinking: number;
+  /** US dollars: fresh tokens (input or cache-write price), cached reads, output, thinking. */
   usdFresh: number;
   usdCached: number;
   usdOutput: number;
+  usdThinking: number;
   ttft: number;
   decode: number;
 };
@@ -29,15 +32,19 @@ export function callCosts(events: Ev[]): CallCost[] {
     .map((e) => {
       const usdCached = (e.cached_tokens * price.cache_read) / 1e6;
       const usdOutput = (e.output_tokens * price.output) / 1e6;
+      const thinking = (e.thinking_tokens as number | undefined) ?? 0;
+      const usdThinking = (thinking * price.output) / 1e6;
       return {
         agent: e.agent,
         turn: e.turn,
         fresh: e.input_tokens - e.cached_tokens,
         cached: e.cached_tokens,
         output: e.output_tokens,
-        usdFresh: e.cost - usdCached - usdOutput,
+        thinking,
+        usdFresh: e.cost - usdCached - usdOutput - usdThinking,
         usdCached,
         usdOutput,
+        usdThinking,
         ttft: e.ttft,
         decode: e.dur - e.ttft,
       };

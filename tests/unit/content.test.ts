@@ -48,8 +48,11 @@ for (const f of FILES) {
     });
 
     it("quotes tool definitions exactly as the prompt carries them", () => {
-      for (const m of src.matchAll(/```json\n([\s\S]*?)```/g))
+      for (const m of src.matchAll(/```json\n([\s\S]*?)```/g)) {
+        // an "In production" Claude Code settings file is not a tool definition
+        if (m[1]!.trimStart().startsWith('{\n  "hooks"')) continue;
         expect(SCHEMAS).toContain(m[1]!.trim());
+      }
     });
 
     it("compiles every animation equation", () => {

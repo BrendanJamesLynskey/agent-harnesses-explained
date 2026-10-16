@@ -35,7 +35,9 @@ if (!/origin\//.test(git("branch", "-r", "--contains", commit))) {
   process.exit(1);
 }
 const list = (dir: string) =>
-  git("ls-tree", "--name-only", commit, `${dir}/`).split("\n").filter(Boolean);
+  git("ls-tree", "-r", "--name-only", commit, `${dir}/`)
+    .split("\n")
+    .filter(Boolean);
 
 // source path in the engine repo -> destination in this site
 const map: Record<string, string> = {};

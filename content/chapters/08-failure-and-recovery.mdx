@@ -80,5 +80,6 @@ return events[events.length - 1]!.status === "done" && lastOk;
 - [Introduction to LangGraph](https://brendanjameslynskey.github.io/Introduction_to_LangGraph/#/7): checkpointing, so a failed run can resume rather than restart.
 - Evaluation papers: [HumanEval](https://brendanjameslynskey.github.io/Papers_07_Evaluation_and_Benchmarks/#slide-02) judges code by running its tests, not by what the model says about it.
 - The [Agents hub](https://brendanjameslynskey.github.io/LLM_Hub_Agents/).
+- Next in the track: [Agent Orchestration Explained, reliability](https://agent-orchestration-explained.vercel.app/learn/07-reliability) takes the same retry maths from one call to a whole workflow, and adds the errors no retry sees (a step that succeeds with a wrong answer) and the verifiers that catch them; [durable execution](https://agent-orchestration-explained.vercel.app/learn/04-durable-execution) is how a failed run resumes. The false "all tests pass" above is what [Agent Evals Explained, trajectories](https://agent-evals-explained.vercel.app/learn/07-trajectories) grades a run for.
 
 </Callout>

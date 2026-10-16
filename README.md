@@ -38,13 +38,13 @@ Inference: Serving,
 | 01  | [The agent loop](https://agent-harnesses-explained.vercel.app/learn/01-the-agent-loop)                     | model → tool call → result → model, the context window filling token by token; a scripted run or a recorded trace                    |
 | 02  | [Tool calling](https://agent-harnesses-explained.vercel.app/learn/02-tool-calling)                         | what the model writes, what the harness parses, what the tool returns; native calls vs ReAct text; a malformed call and its recovery |
 | 03  | [The context window as a budget](https://agent-harnesses-explained.vercel.app/learn/03-the-context-budget) | the window filling call by call until compaction fires; truncate, clip or summarise, and the facts each loses                        |
-| 04  | [Prompt caching](https://agent-harnesses-explained.vercel.app/learn/04-prompt-caching)                     | the cached prefix call by call, and the running cost with and without it; what breaks the cache                                      |
+| 04  | [Prompt caching](https://agent-harnesses-explained.vercel.app/learn/04-prompt-caching)                     | the cached prefix call by call, and the running cost with and without it, on two model generations; what breaks the cache            |
 | 05  | [Permissions and the human in the loop](https://agent-harnesses-explained.vercel.app/learn/05-permissions) | allow / ask / deny rules evaluated live; the human's waits on a timeline; four modes compared                                        |
 | 06  | [Sub-agents](https://agent-harnesses-explained.vercel.app/learn/06-sub-agents)                             | the parent's and the sub-agent's contexts side by side; the report handed back; tokens saved against time and money spent            |
 | 07  | [Hooks and sandboxing](https://agent-harnesses-explained.vercel.app/learn/07-hooks-and-sandboxing)         | each call through permissions, pre-tool hooks, the sandbox boundary around the shell and post-tool hooks                             |
 | 08  | [Failure and recovery](https://agent-harnesses-explained.vercel.app/learn/08-failure-and-recovery)         | retries with back-off and loop detection on a timeline; success against the retry budget over 100 seeded runs                        |
-| 09  | [Harnesses compared](https://agent-harnesses-explained.vercel.app/learn/09-harnesses-compared)             | a sourced matrix of six public harnesses' choices, and the same task under a policy imitation of each (not the products)             |
-| 10  | [Cost and latency of a task](https://agent-harnesses-explained.vercel.app/learn/10-cost-and-latency)       | a live calculator: every model call's cost and time taken apart, for any task, price, speed, cache and permission mode               |
+| 09  | [Harnesses compared](https://agent-harnesses-explained.vercel.app/learn/09-harnesses-compared)             | a sourced matrix of six public harnesses and two agent SDKs, and the same task under a policy imitation of each harness              |
+| 10  | [Cost and latency of a task](https://agent-harnesses-explained.vercel.app/learn/10-cost-and-latency)       | a live calculator: every model call's cost and time taken apart, for any task, model, speed, cache, permissions and thinking budget  |
 
 [`/traces`](https://agent-harnesses-explained.vercel.app/traces) holds the recorded traces with their provenance.
 
@@ -80,14 +80,20 @@ reproduce every event and every animation frame exactly.
   all three tasks, in instructive ways; the [traces page](https://agent-harnesses-explained.vercel.app/traces)
   says how.
 - **Every number in the prose** is computed by the engine at build time (`<V of="…">`, `src/lib/agent/values.ts`);
-  every code block is cut from the vendored engine.
+  every code block is cut from the vendored engine, except the "In production" snippets beside them (chapter 4's
+  `cache_control` call, chapter 7's `PreToolUse` hook), which are taken from the vendors' current docs and say on
+  the page what was run.
 
 ## What is illustrative
 
-- Prices are list prices copied on 2026-10-07 from the
+- Prices are list prices re-checked on 2026-10-16 (engine 1.12) from the
   [Claude API](https://platform.claude.com/docs/en/about-claude/pricing) and
-  [OpenAI API](https://developers.openai.com/api/docs/pricing) pricing pages; they change, and the token counts
-  are Qwen2.5's, so a cost means "this many tokens at that price", not a quote.
+  [OpenAI API](https://developers.openai.com/api/docs/pricing) pricing pages and, for gpt-oss-120b,
+  [Together AI's](https://www.together.ai/pricing); they change, and the token counts are Qwen2.5's, so a cost
+  means "this many tokens at that price", not a quote. Chapters 4, 6, 9 and 10 have a price switch between the
+  earlier models (Sonnet 4.6, Haiku 4.5, GPT-5 mini) and the current ones (Sonnet 5.5, Haiku 5.5, GPT-6.1 Sol);
+  chapter 4 has the full table, with each model's cache read multiplier and minimum.
+- Chapter 10's thinking budgets (1,000 or 4,000 reasoning tokens per call) are fixed, illustrative numbers.
 - The prompt cache is a simple prefix model of the providers' documented rules.
 - Hosted-model latency, tool latencies and the simulated human's answer times are illustrative; the local
   model's speed is measured (the recorded traces' llama.cpp timings).

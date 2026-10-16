@@ -18,7 +18,7 @@ import { Segmented } from "@/components/ui/Controls";
 import { harnessCaption } from "@/lib/agent/captions";
 import { HARNESSES } from "@/lib/agent/harnesses";
 import { permissionFrames, type Obj } from "@/lib/engine/vendor/index";
-import { fmtInt, fmtMs, fmtUsd } from "@/lib/format";
+import { fmtInt, fmtMs, fmtUsd, pct } from "@/lib/format";
 import { OKABE_ITO, STATE_COLOUR } from "@/lib/viz/palette";
 
 import { useEngine } from "./useEngine";
@@ -47,6 +47,17 @@ function short(f: Obj): string {
   return (f.name as string).replace("_file", "").replace("list_files", "ls");
 }
 
+// the same six runs priced on two generations (chapter_configs.json: "<harness>@<price>")
+const PRICES_AT = [
+  { value: "", label: "Sonnet 4.6" },
+  { value: "@claude-sonnet-5.5", label: "Sonnet 5.5" },
+] as const;
+type At = (typeof PRICES_AT)[number]["value"];
+const PRICE_LABEL: Record<At, string> = {
+  "": "Claude Sonnet 4.6 list price, 1,024-token cache minimum",
+  "@claude-sonnet-5.5": "Claude Sonnet 5.5 list price, 512-token cache minimum",
+};
+
 export default function HarnessesWidget({
   children,
 }: {
@@ -54,19 +65,20 @@ export default function HarnessesWidget({
 }): JSX.Element {
   const engine = useEngine("harnesses");
   const [focus, setFocus] = useState<Key>("claude-code");
+  const [at, setAt] = useState<At>("");
   const [hover, setHover] = useState<string | null>(null);
   const rows = useMemo(
     () =>
       engine.status === "ready"
         ? HARNESSES.map((h) => {
-            const ev = engine.runs[h.key]!;
+            const ev = engine.runs[`${h.key}${at}`]!;
             return { ...h, ev, frames: permissionFrames(ev) };
           })
         : [],
-    [engine],
+    [engine, at],
   );
   const n = rows.length ? rows[0]!.frames.length : 0;
-  const st = useStepper(n, { stepMs: 1300, resetKey: focus });
+  const st = useStepper(n, { stepMs: 1300, resetKey: `${focus}${at}` });
   if (engine.status !== "ready" || n === 0)
     return (
       <EngineStatus
@@ -182,8 +194,7 @@ export default function HarnessesWidget({
     >
       <table className="w-full min-w-80 text-left text-[0.72rem]">
         <caption className="text-left text-[0.72rem] text-neutral-600 dark:text-neutral-400">
-          Whole run, same model price (Claude Sonnet 4.6 list price,
-          illustrative)
+          Whole run, same model price ({PRICE_LABEL[at]}; illustrative)
         </caption>
         <thead>
           <tr className="text-neutral-600 dark:text-neutral-400">
@@ -192,6 +203,7 @@ export default function HarnessesWidget({
             <th className="py-1 pr-2 font-medium">Questions</th>
             <th className="py-1 pr-2 font-medium">Stopped</th>
             <th className="py-1 pr-2 font-medium">Tokens</th>
+            <th className="py-1 pr-2 font-medium">Cached</th>
             <th className="py-1 font-medium">Cost</th>
           </tr>
         </thead>
@@ -217,6 +229,9 @@ export default function HarnessesWidget({
                 <td className="py-0.5 pr-2">{stopped}</td>
                 <td className="py-0.5 pr-2">
                   {fmtInt(t.input_tokens + t.output_tokens)}
+                </td>
+                <td className="py-0.5 pr-2">
+                  {pct(t.cached_tokens / t.input_tokens)}
                 </td>
                 <td className="py-0.5">{fmtUsd(t.cost)}</td>
               </tr>
@@ -244,12 +259,20 @@ export default function HarnessesWidget({
       hl={hover ?? hl}
       onEquationHover={setHover}
       params={
-        <Segmented
-          label="Highlight"
-          value={focus}
-          options={HARNESSES.map((h) => ({ value: h.key, label: h.label }))}
-          onChange={setFocus}
-        />
+        <>
+          <Segmented
+            label="Highlight"
+            value={focus}
+            options={HARNESSES.map((h) => ({ value: h.key, label: h.label }))}
+            onChange={setFocus}
+          />
+          <Segmented
+            label="Prices"
+            value={at}
+            options={PRICES_AT}
+            onChange={setAt}
+          />
+        </>
       }
     />
   );
