@@ -1,5 +1,7 @@
+import type { Route } from "next";
 import Link from "next/link";
 
+import { CheckedStrip, StartButton } from "@/components/ui/Landing";
 import { TurnBars } from "@/components/viz/TurnBars";
 import { formatValue, lookup } from "@/lib/agent/values";
 import { SECTIONS } from "@/lib/mdx/sections";
@@ -24,35 +26,21 @@ export default function HomePage(): JSX.Element {
       <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
         What sits between a model and the world.
       </h1>
-      <div className="mt-8 grid items-center gap-8 md:grid-cols-[1fr_minmax(0,24rem)]">
+      <div className="mt-6 grid items-start gap-8 md:grid-cols-[1fr_minmax(0,24rem)]">
         <div>
           <p className="max-w-2xl text-lg text-neutral-600 dark:text-neutral-300">
-            A chat model only writes text. The <strong>harness</strong> around
-            it turns that into an agent: it runs the loop, describes the tools,
-            parses the calls, decides which ones may run, keeps the context
-            inside the window and the prompt cache warm. To fix one failing
-            test, a scripted agent here makes {v("loop.scripted.turns", "int")}{" "}
-            model calls and sends the model{" "}
-            {v("loop.scripted.input_tokens", "tokens")} to write{" "}
-            {v("loop.scripted.output_tokens", "tokens")}.
+            An interactive guide to the agent harness: the loop, the tools,
+            permissions and context management around a model, animated by a
+            tested simulator.
           </p>
-          <p className="mt-4 max-w-2xl text-neutral-600 dark:text-neutral-300">
-            Each chapter takes one of the harness&apos;s choices apart, built
-            around an animation. Every frame comes from{" "}
-            <a href={ENGINE_URL} className={LINK}>
-              Agent_Loop_Sim
-            </a>
-            , a deterministic simulator with a real tokenizer, tested against
-            its Python reference. Nothing here calls a live model: the scripted
-            runs are reproducible, and three runs of a small open-weights model
-            were{" "}
-            <Link href="/traces" className={LINK}>
-              recorded once
-            </Link>{" "}
-            and are replayed token for token, failures and all.
-          </p>
+          <div className="mt-6">
+            <StartButton href={`/learn/${SECTIONS[0]!.slug}` as Route} />
+          </div>
         </div>
-        <figure className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+        <figure
+          data-hero-figure
+          className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+        >
           <TurnBars />
           <figcaption className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
             The context sent to the model on each turn of the scripted run, in
@@ -60,6 +48,40 @@ export default function HomePage(): JSX.Element {
           </figcaption>
         </figure>
       </div>
+      <CheckedStrip href="/about#engine">
+        Agent_Loop_Sim&apos;s Python reference and the TypeScript port in your
+        browser produce the same events, token for token and float for float,
+        and three recorded runs of a small open-weights model are replayed token
+        for token.
+      </CheckedStrip>
+      <section aria-labelledby="learn-heading" className="mt-12">
+        <h2 id="learn-heading" className="text-xl font-semibold tracking-tight">
+          What you&apos;ll learn
+        </h2>
+        <p className="mt-4 max-w-2xl text-neutral-600 dark:text-neutral-300">
+          A chat model only writes text. The <strong>harness</strong> around it
+          turns that into an agent: it runs the loop, describes the tools,
+          parses the calls, decides which ones may run, keeps the context inside
+          the window and the prompt cache warm. To fix one failing test, a
+          scripted agent here makes {v("loop.scripted.turns", "int")} model
+          calls and sends the model {v("loop.scripted.input_tokens", "tokens")}{" "}
+          to write {v("loop.scripted.output_tokens", "tokens")}.
+        </p>
+        <p className="mt-4 max-w-2xl text-neutral-600 dark:text-neutral-300">
+          Each chapter takes one of the harness&apos;s choices apart, built
+          around an animation. Every frame comes from{" "}
+          <a href={ENGINE_URL} className={LINK}>
+            Agent_Loop_Sim
+          </a>
+          , a deterministic simulator with a real tokenizer, tested against its
+          Python reference. Nothing here calls a live model: the scripted runs
+          are reproducible, and three runs of a small open-weights model were{" "}
+          <Link href="/traces" className={LINK}>
+            recorded once
+          </Link>{" "}
+          and are replayed token for token, failures and all.
+        </p>
+      </section>
       <nav
         aria-label="Chapters"
         className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"

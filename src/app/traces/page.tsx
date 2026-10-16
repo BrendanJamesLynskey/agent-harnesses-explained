@@ -8,12 +8,13 @@ import Link from "next/link";
 import { TRACES, type Obj } from "@/lib/engine";
 import { fmtInt, fmtMs } from "@/lib/format";
 import { ENGINE_URL } from "@/lib/site";
+import { withShare } from "@/lib/share";
 
-export const metadata = {
+export const metadata = withShare("/traces", {
   title: "Recorded traces",
   description:
     "Three runs of Qwen2.5-1.5B-Instruct on a CPU, recorded once with llama.cpp and replayed token-exactly by the chapters: provenance, counts, timings and every completion.",
-};
+});
 
 const A =
   "focus-ring rounded text-accent underline underline-offset-2 dark:text-indigo-300";

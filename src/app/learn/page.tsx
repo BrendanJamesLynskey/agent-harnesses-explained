@@ -9,12 +9,13 @@ import Link from "next/link";
 
 import { SECTIONS } from "@/lib/mdx/sections";
 import { AGENTS_HUB, CODING_AGENTS_HUB } from "@/lib/site";
+import { withShare } from "@/lib/share";
 
-export const metadata = {
+export const metadata = withShare("/learn", {
   title: "Learn",
   description:
     "Chapters on how an agent harness works, each built around an animation driven by the tested agent-loop simulator.",
-};
+});
 
 export default function LearnIndex(): JSX.Element {
   return (

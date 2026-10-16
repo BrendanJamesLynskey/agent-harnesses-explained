@@ -10,10 +10,11 @@ import type { ReactNode } from "react";
 
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { SITE_URL } from "@/lib/site";
+import { withShare } from "@/lib/share";
 
 import "./globals.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withShare("/", {
   metadataBase: new URL(SITE_URL),
   title: {
     default: "Agent Harnesses Explained",
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
   },
   description:
     "What sits between a model and the world: the agent loop, tool calls, the context budget, prompt caching, permissions, sub-agents, hooks and sandboxing, failure and recovery, harnesses compared, and cost and latency, each animated by a tested agent-loop simulator replaying recorded traces.",
-};
+});
 
 export default function RootLayout({
   children,
