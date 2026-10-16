@@ -13,7 +13,7 @@ import { join } from "node:path";
 
 import { ImageResponse } from "next/og";
 
-import { SHARE } from "@/lib/share";
+import { SHARE, type Share } from "@/lib/share";
 
 import { Glyph, Motif } from "./motif";
 
@@ -30,159 +30,161 @@ const BG = "#0b1020";
 
 export type CardChapter = { number: number; title: string };
 
-export async function card(chapter?: CardChapter): Promise<ImageResponse> {
+export async function card(
+  chapter?: CardChapter,
+  share: Share = SHARE,
+): Promise<ImageResponse> {
   const [bold, regular, mono] = await Promise.all([
     font("NotoSans-Bold.ttf"),
     font("NotoSans-Regular.ttf"),
     font("NotoSansMono-Bold.ttf"),
   ]);
-  const c = SHARE.color;
-  const host = SHARE.url.replace(/^https:\/\//, "");
-  const big = chapter ? chapter.title : SHARE.name;
+  const c = share.color;
+  const host = share.url.replace(/^https:\/\//, "");
+  const big = chapter ? chapter.title : share.name;
   const size = big.length > 26 ? 60 : big.length > 22 ? 68 : 78;
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        position: "relative",
+        background: BG,
+        backgroundImage: `radial-gradient(circle at 82% 45%, ${c}66 0%, ${BG}00 55%), radial-gradient(circle at 0% 100%, ${c}33 0%, ${BG}00 45%)`,
+        fontFamily: "Noto Sans",
+        color: INK,
+      }}
+    >
       <div
         style={{
-          width: "100%",
-          height: "100%",
           display: "flex",
-          position: "relative",
-          background: BG,
-          backgroundImage: `radial-gradient(circle at 82% 45%, ${c}66 0%, ${BG}00 55%), radial-gradient(circle at 0% 100%, ${c}33 0%, ${BG}00 45%)`,
-          fontFamily: "Noto Sans",
-          color: INK,
+          flexDirection: "column",
+          justifyContent: "space-between",
+          width: 700,
+          padding: "64px 0 56px 72px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            width: 700,
-            padding: "64px 0 56px 72px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-            <Glyph size={52} />
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <Glyph size={52} />
+          <div
+            style={{
+              display: "flex",
+              fontFamily: "Noto Sans Mono",
+              fontSize: 22,
+              letterSpacing: 3,
+              color: INK,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {share.kicker ??
+              (share.track ? `${share.track.toUpperCase()} TRACK` : "")}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {chapter && (
             <div
               style={{
                 display: "flex",
                 fontFamily: "Noto Sans Mono",
-                fontSize: 22,
-                letterSpacing: 3,
-                color: INK,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {SHARE.track ? `${SHARE.track.toUpperCase()} TRACK` : "STUDY"}
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {chapter && (
-              <div
-                style={{
-                  display: "flex",
-                  fontFamily: "Noto Sans Mono",
-                  fontSize: 24,
-                  color: MUTED,
-                  marginBottom: 14,
-                }}
-              >
-                {`CHAPTER ${String(chapter.number).padStart(2, "0")} · ${SHARE.name}`}
-              </div>
-            )}
-            <div
-              style={{
-                display: "flex",
-                fontSize: size,
-                fontWeight: 700,
-                lineHeight: 1.06,
-                letterSpacing: -1.5,
-              }}
-            >
-              {big}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                marginTop: 22,
-                fontSize: 32,
-                lineHeight: 1.3,
+                fontSize: 24,
                 color: MUTED,
+                marginBottom: 14,
               }}
             >
-              {SHARE.claim}
+              {`CHAPTER ${String(chapter.number).padStart(2, "0")} · ${share.name}`}
             </div>
+          )}
+          <div
+            style={{
+              display: "flex",
+              fontSize: size,
+              fontWeight: 700,
+              lineHeight: 1.06,
+              letterSpacing: -1.5,
+            }}
+          >
+            {big}
           </div>
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
-              borderLeft: `6px solid ${c}`,
-              paddingLeft: 18,
+              marginTop: 22,
+              fontSize: 32,
+              lineHeight: 1.3,
+              color: MUTED,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                fontFamily: "Noto Sans Mono",
-                fontSize: 16,
-                letterSpacing: 2,
-                color: FAINT,
-              }}
-            >
-              HOW THIS IS CHECKED
-            </div>
-            <div
-              style={{
-                display: "flex",
-                marginTop: 6,
-                fontSize: 22,
-                lineHeight: 1.35,
-                color: MUTED,
-              }}
-            >
-              {SHARE.checkedShort}
-            </div>
+            {share.claim}
           </div>
         </div>
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 500,
-            paddingRight: 40,
+            flexDirection: "column",
+            borderLeft: `6px solid ${c}`,
+            paddingLeft: 18,
           }}
         >
-          <Motif />
+          <div
+            style={{
+              display: "flex",
+              fontFamily: "Noto Sans Mono",
+              fontSize: 16,
+              letterSpacing: 2,
+              color: FAINT,
+            }}
+          >
+            HOW THIS IS CHECKED
+          </div>
+          <div
+            style={{
+              display: "flex",
+              marginTop: 6,
+              fontSize: 22,
+              lineHeight: 1.35,
+              color: MUTED,
+            }}
+          >
+            {share.checkedShort}
+          </div>
         </div>
-        <div
-          style={{
-            position: "absolute",
-            right: 56,
-            bottom: 44,
-            display: "flex",
-            fontSize: 22,
-            color: FAINT,
-          }}
-        >
-          {host}
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            bottom: 0,
-            width: "100%",
-            height: 10,
-            display: "flex",
-            backgroundImage: `linear-gradient(90deg, ${c}, ${c}00)`,
-          }}
-        />
       </div>
-    ),
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 500,
+          paddingRight: 40,
+        }}
+      >
+        <Motif />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          right: 56,
+          bottom: 44,
+          display: "flex",
+          fontSize: 22,
+          color: FAINT,
+        }}
+      >
+        {host}
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          bottom: 0,
+          width: "100%",
+          height: 10,
+          display: "flex",
+          backgroundImage: `linear-gradient(90deg, ${c}, ${c}00)`,
+        }}
+      />
+    </div>,
     {
       ...OG_SIZE,
       fonts: [
