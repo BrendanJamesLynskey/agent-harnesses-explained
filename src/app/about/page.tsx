@@ -21,12 +21,13 @@ import {
   TRADEOFFS_URL,
   repoFile,
 } from "@/lib/site";
+import { withShare } from "@/lib/share";
 
-export const metadata = {
+export const metadata = withShare("/about", {
   title: "About",
   description:
     "What Agent Harnesses Explained's engine simulates, what is illustrative, and how the engine, its replays and its animations are checked.",
-};
+});
 
 const A =
   "focus-ring rounded text-accent underline underline-offset-2 dark:text-indigo-300";
@@ -82,7 +83,7 @@ export default function AboutPage(): JSX.Element {
           and others, all in the header&apos;s switch).
         </p>
 
-        <h2>The engine</h2>
+        <h2 id="engine">The engine</h2>
         <p>
           Every animation is a run of{" "}
           <a href={ENGINE_URL} className={A}>
