@@ -107,7 +107,7 @@ export function HarnessMatrix(): JSX.Element {
                     <td
                       key={h.key}
                       data-cell={`${h.key}:${c}`}
-                      className={`p-2 align-top text-neutral-800 dark:text-neutral-200 ${c === "Imitated as" ? "font-mono text-[0.68rem]" : ""} ${SDK_KEYS.has(h.key) ? "border-l-2 border-neutral-300 dark:border-neutral-600" : ""}`}
+                      className={`p-2 align-top text-neutral-800 [overflow-wrap:anywhere] dark:text-neutral-200 ${c === "Imitated as" ? "font-mono text-[0.68rem]" : ""} ${SDK_KEYS.has(h.key) ? "border-l-2 border-neutral-300 dark:border-neutral-600" : ""}`}
                     >
                       {cell.text}
                       {cell.inferred && (

@@ -9,6 +9,14 @@ import { fmtInt, trim } from "@/lib/format";
 
 const ORDER = ["Claude 5.x", "GPT-6", "open weights", "Claude 4.x", "GPT-5"];
 
+/** A price per million tokens: whole dollars as they are ($4), whole cents to the cent ($0.20), finer as they are ($0.025). */
+function usd(v: number): string {
+  if (Number.isInteger(v)) return `$${v}`;
+  return Number.isInteger(Math.round(v * 1e6) / 1e4)
+    ? `$${v.toFixed(2)}`
+    : `$${trim(v)}`;
+}
+
 export function PriceTable(): JSX.Element {
   const rows = Object.entries(PRICES as Record<string, Obj>)
     .filter(([k]) => k !== "local")
@@ -58,10 +66,10 @@ export function PriceTable(): JSX.Element {
                   </a>
                 </td>
                 <td className="p-2 font-sans">{p.generation as string}</td>
-                <td className="p-2 text-right">${trim(p.input as number)}</td>
-                <td className="p-2 text-right">${trim(p.output as number)}</td>
+                <td className="p-2 text-right">{usd(p.input as number)}</td>
+                <td className="p-2 text-right">{usd(p.output as number)}</td>
                 <td className="p-2 text-right">
-                  {p.cache_listed ? `$${trim(p.cache_read as number)}` : "—"}
+                  {p.cache_listed ? usd(p.cache_read as number) : "—"}
                 </td>
                 <td className="p-2 text-right">
                   {p.cache_listed ? trim(p.read_multiplier as number) : "—"}

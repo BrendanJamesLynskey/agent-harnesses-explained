@@ -200,5 +200,5 @@ export function harnessCaption(
 }
 
 export function costCaption(f: Obj, i: number, dur: number): string {
-  return `Call ${i + 1}: ${fmtInt(f.uncached)} new and ${fmtInt(f.cached)} cached prompt tokens, ${fmtInt(f.output)} output tokens; ${fmtUsd(f.cost)} and ${fmtMs(dur)}. Running total ${fmtUsd(f.cum)}.`;
+  return `Call ${i + 1}: ${fmtInt(f.uncached)} new and ${fmtInt(f.cached)} cached prompt tokens, ${fmtInt(f.output)} output tokens${f.thinking ? ` + ${fmtInt(f.thinking)} thinking` : ""}; ${fmtUsd(f.cost)} and ${fmtMs(dur)}. Running total ${fmtUsd(f.cum)}.`;
 }
