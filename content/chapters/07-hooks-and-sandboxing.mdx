@@ -22,7 +22,7 @@ Order matters. A hook runs before the tool; the sandbox applies while it runs. A
 
 <Callout kind="illustrative">
 
-The sandbox here checks the command line, which is all a simulated shell has: it knows `pip install` and `curl` need the network and that a path starting with `/`, `~` or `..` is outside the repository. A real sandbox is enforced by the operating system on every file and network access the command makes, so it also catches what a command line hides. Hook and tool latencies are illustrative. This chapter is about the mechanisms; the Security site in this family will cover the threats they defend against.
+The sandbox here checks the command line, which is all a simulated shell has: it knows `pip install` and `curl` need the network and that a path starting with `/`, `~` or `..` is outside the repository. A real sandbox is enforced by the operating system on every file and network access the command makes, so it also catches what a command line hides. Hook and tool latencies are illustrative. This chapter is about the mechanisms; the Security site covers the threats they defend against, in [sandboxing and egress](https://agent-security-explained.vercel.app/learn/05-sandboxing-and-egress) (its chapter 5) and [humans in the loop](https://agent-security-explained.vercel.app/learn/08-humans-in-the-loop) (chapter 8).
 
 </Callout>
 
