@@ -34,7 +34,7 @@ $$
 \text{runs}(c) = \text{allowed}(c) \land \lnot\,\text{blocked}(c) \land \text{inside}(c).
 $$
 
-The first two are the harness's decisions, made before anything runs, from what the call says. The third is the operating system's, made while it runs, from what the call does. A rule or a hook that misreads a command (a shell alias, a script that deletes files) lets it through; the sandbox does not read commands at all. Hooks cost time too: here the three hooks change the run's time from <V of="hooks.workspace-nohooks.elapsed" fmt="ms" /> to <V of="hooks.workspace-hooks.elapsed" fmt="ms" />, because the two blocked deletes never run.
+The first two are the harness's decisions, made before anything runs, from what the call says. The third is the operating system's, made while it runs, from what the call does. A rule or a hook that misreads a command (a shell alias, a script that deletes files) lets it through; the sandbox does not read commands at all. Hooks change the run's time as well: here the three hooks take it from <V of="hooks.workspace-nohooks.elapsed" fmt="ms" /> to <V of="hooks.workspace-hooks.elapsed" fmt="ms" />, because the two blocked deletes never run.
 
 </Layer>
 
