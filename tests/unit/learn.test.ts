@@ -57,6 +57,7 @@ const all = chapters.flatMap((c) =>
   checks(c.source).map((t) => ({ chapter: c.name, ...t })),
 );
 const byId = new Map(all.map((c) => [c.props.id!, c]));
+const num = (p: string) => lookup(p) as number;
 
 /** The scale of each unit the formatters print, against the engine's raw value (ms, tokens). */
 const SCALE: Record<string, number> = {
@@ -211,7 +212,6 @@ describe("choice answers that rest on the model", () => {
     const choices = c.props.choices!.match(/"([^"]*)"/g)!;
     return choices[Number(c.props.answer)]!.slice(1, -1);
   };
-  const num = (p: string) => lookup(p) as number;
 
   it("ha01-q3: the input sent grows faster than linearly", () => {
     expect(num("loop.scripted.input_tokens")).toBeGreaterThan(
