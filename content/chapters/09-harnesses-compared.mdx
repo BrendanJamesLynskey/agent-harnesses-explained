@@ -9,7 +9,11 @@
 
 Every mechanism in this site is a choice a real harness makes: how tool calls are written, what needs a person's approval, whether there is a sandbox, what happens when the context fills, whether there are sub-agents and hooks. The matrix below records how six public coding-agent harnesses make those choices, from their own documentation; the animation replays one task under a **policy imitation** of each: the simulator's settings closest to that harness's documented defaults.
 
+<span id="ha-imitation" />
+
 **A policy imitation, not the product.** The model is the same scripted policy in every row, so it takes the same <V of="harnesses.claude-code@claude-sonnet-5.5.turns" fmt="int" /> turns everywhere, and the price is the same list price. What changes is only what the harness does around the model. That isolates the harness, and it also means the rows say nothing about how good each product is: the products differ far more in their prompts, their tools and the models they are used with than any of this shows.
+
+<span id="ha-shows" />
 
 What the imitation does show:
 
@@ -30,6 +34,8 @@ Each row's policy is our reading of documented defaults on 2026-10-07, simplifie
 </Callout>
 
 <Layer kind="maths">
+
+<span id="ha-time-maths" />
 
 Split a run's time into the model's calls, the tools and the human:
 
@@ -62,3 +68,73 @@ The six policies are in [`chapter_configs.json`](https://github.com/BrendanJames
 - The [Coding Agents hub](https://brendanjameslynskey.github.io/LLM_Hub_Coding_Agents/), and a harness built step by step in LangGraph: [Raschka_Coding_Agent_LangGraph](https://github.com/BrendanJamesLynskey/Raschka_Coding_Agent_LangGraph).
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha09-q1"
+  n={1}
+  input="number"
+  of="harnesses.mini-swe-agent@claude-sonnet-5.5.human_prompts"
+  fmt="int"
+  q="How many questions does the mini-SWE-agent imitation (confirm mode) ask the human on this task?"
+  href="#ha-shows"
+  more="What the imitation shows"
+>
+  It asks before each command, so it waits
+  <V of="harnesses.mini-swe-agent@claude-sonnet-5.5.human_wait" fmt="ms" /> for
+  answers, against none for the SWE-agent imitation. The number of questions
+  decides the ranking.
+</Check>
+
+<Check
+  id="ha09-q2"
+  n={2}
+  choices={["Claude Code", "Codex CLI", "OpenHands", "Aider"]}
+  answer={1}
+  q="In which imitation are the install and the home-directory delete stopped?"
+  href="#ha-shows"
+  more="What the imitation shows"
+>
+  Codex CLI: its workspace sandbox stops them
+  (<V of="harnesses.codex-cli@claude-sonnet-5.5.sandboxed" fmt="int" /> calls)
+  without asking anything. The simulated human approves every question, so
+  asking alone stops nothing.
+</Check>
+
+<Check
+  id="ha09-q3"
+  n={3}
+  choices={[
+    "Aider: it sends fewer tokens",
+    "The Claude Code imitation",
+    "They cost the same",
+  ]}
+  answer={1}
+  q="Switch the prices to Sonnet 4.6. Which costs less: the Aider imitation (ReAct-style text) or the Claude Code imitation (native calls)?"
+  href="#ha-shows"
+  more="What the imitation shows"
+>
+  The Claude Code imitation, <V of="harnesses.claude-code.cost" fmt="usd" />
+  against <V of="harnesses.aider.cost" fmt="usd" />: the shorter ReAct prompts
+  stay under Sonnet 4.6's
+  <V of="prices.claude-sonnet-4.6.min_tokens" fmt="int" />-token minimum and
+  are never read from the cache.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- Each row is a policy imitation of documented defaults, not the product: same scripted model, same prices.
+- Approvals dominate the time; the number of questions sets the ranking.
+- A sandbox stops what an always-approving human would let through.
+- Which tool-call format is cheaper depends on the model's cache rules as much as on the format.
+
+<Keep>
+  The asking rows spend most of the run waiting: mini-SWE-agent's imitation
+  took <V of="harnesses.mini-swe-agent@claude-sonnet-5.5.elapsed" fmt="ms" />
+  against <V of="harnesses.swe-agent@claude-sonnet-5.5.elapsed" fmt="ms" />.
+</Keep>
+
+</Remember>

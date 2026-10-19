@@ -15,9 +15,15 @@ In the **native** style the tools are described as JSON Schema inside the system
 {"type": "function", "function": {"name": "read_file", "description": "Read a text file and return its contents.", "parameters": {"type": "object", "properties": {"path": {"type": "string", "description": "Path of the file to read."}}, "required": ["path"]}}}
 ```
 
+<span id="ha-tool-tokens" />
+
 The four definitions and the template's instructions cost <V of="toolcall.native.tools_tokens" fmt="tokens" />, and they are sent on every call (deferred tool loading, in [chapter 3](/learn/03-the-context-budget), is how current APIs avoid that for large tool sets). In the **ReAct** style there is no tool block: the system prompt describes the tools in prose and asks for `Thought:`, `Action:` and `Action Input:` lines. That costs <V of="toolcall.react.tools_tokens" fmt="tokens" />, and the harness has to find the action in free text, which is the style's weakness.
 
+<span id="ha-checks" />
+
 The harness makes three checks on every call: is the text valid JSON, is the tool one it offered, and do the arguments fit the tool's schema (required fields present, no unknown fields, strings where strings are expected)? Anything that fails is **malformed**. The harness does not guess; it sends a short error back as the next message and lets the model try again. In the animation, turn 2 is deliberately broken (a missing closing brace natively, an unclosed object in ReAct), and the scripted model repairs it on turn 3.
+
+<span id="ha-malformed-cost" />
 
 A malformed call is not free. Natively, it added <V of="toolcall.extra.native" fmt="tokens" /> of input to this run against the same run without it: the wasted call re-sent the whole context (<V of="toolcall.native.bad_context" fmt="tokens" />), and its <V of="toolcall.native.bad_assistant" fmt="int" />-token text and the <V of="toolcall.native.bad_error" fmt="int" />-token error were re-read by each of the <V of="toolcall.native.bad_later" fmt="int" /> calls after it.
 
@@ -85,3 +91,74 @@ Sources, accessed 2026-10-07: [Anthropic, tool use](https://platform.claude.com/
 - The same call on the wire: [Agent Protocols Explained, why a protocol](https://agent-protocols-explained.vercel.app/learn/01-why-a-protocol) and [tools, resources and prompts](https://agent-protocols-explained.vercel.app/learn/03-tools-resources-and-prompts).
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha02-q1"
+  n={1}
+  input="number"
+  of="toolcall.extra.native"
+  fmt="int"
+  q="The broken call's text and the error it got back are a few dozen tokens. How many extra input tokens did that one malformed call add to the run?"
+  href="#ha-malformed-cost"
+  more="What a malformed call costs"
+>
+  Far more than the few dozen tokens of text and error: the wasted call re-sent the whole context
+  (<V of="toolcall.native.bad_context" fmt="tokens" />), and its text and the
+  error were re-read by each of the <V of="toolcall.native.bad_later" fmt="int" /> later
+  calls.
+</Check>
+
+<Check
+  id="ha02-q2"
+  n={2}
+  choices={[
+    "Native JSON Schema in the system turn",
+    "ReAct prose in the system prompt",
+    "They cost the same",
+  ]}
+  answer={0}
+  q="Which way of describing the same four tools costs more tokens on every call?"
+  href="#ha-tool-tokens"
+  more="Native and ReAct styles"
+>
+  The JSON Schemas cost <V of="toolcall.native.tools_tokens" fmt="tokens" />
+  against <V of="toolcall.react.tools_tokens" fmt="tokens" /> for the prose.
+  ReAct is shorter, but the harness then has to find the action in free text,
+  which is where it breaks.
+</Check>
+
+<Check
+  id="ha02-q3"
+  n={3}
+  choices={[
+    "Early in a long run",
+    "Late in a long run",
+    "It makes no difference",
+  ]}
+  answer={0}
+  q="When is a malformed call most expensive?"
+  href="#ha-malformed-cost"
+  more="What a malformed call costs"
+>
+  Its text and the error stay in the context, so every later call re-reads
+  them: the cost grows with the number of calls after it. That is one reason
+  harnesses validate strictly and keep their errors short.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- A tool call is text in a format the harness described in the prompt; the harness parses it, checks it and runs it.
+- Three checks on every call: valid JSON, a tool it offered, arguments that fit the schema. Anything else is malformed.
+- A malformed call is answered with a short error, not a guess, and the model tries again.
+- Its debris is re-read by every later call, so a failure early in a long run costs the most.
+
+<Keep>
+  One malformed call added <V of="toolcall.extra.native" fmt="tokens" /> to
+  this run: the wasted context plus its debris, times the calls after it.
+</Keep>
+
+</Remember>

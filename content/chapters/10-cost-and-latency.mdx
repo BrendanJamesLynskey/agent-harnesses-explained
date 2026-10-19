@@ -9,7 +9,11 @@
 
 Everything in the earlier chapters ends up in two numbers: what a task costs, and how long it takes. Both are sums over the model calls, and the calculator above computes them the way the engine does: pick a task and a policy, and the engine runs it (in your browser, in a background thread) and takes every call apart.
 
+<span id="ha-cost-parts" />
+
 Per call, the **cost** has three parts: the prompt tokens not in the cache, at the input price (or the cache-write price, if the prompt is being cached); the prompt tokens read from the cache, at a fraction $\rho$ of that (a tenth on most models, less on the newest; [chapter 4](/learn/04-prompt-caching) has the table and the maths); and the output tokens, at several times the input price. On a reasoning model the output includes **thinking tokens**, which are billed as output too. The **time** has two: the time to the first token, which grows with the uncached prompt, and the decode time, which grows with the output. Around the calls come the tools, the human's answers and any back-off.
+
+<span id="ha-calc" />
 
 A few things the calculator shows:
 
@@ -69,3 +73,71 @@ return [ttft, ttft + (output * 1000) / profile.decode_tps];
 - The cost of a long prompt against retrieving a few chunks, with the cache in play: [Agent Context Explained, long context or retrieval?](https://agent-context-explained.vercel.app/learn/09-long-context-or-retrieval).
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha10-q1"
+  n={1}
+  input="slider"
+  min={0}
+  max={100}
+  step={1}
+  of="cost.research-claude-sonnet-5.5-hosted-cache-auto.input_cost_share"
+  fmt="pct"
+  abs={5}
+  q="On the note-reading task at Sonnet 5.5, with no thinking, what share of the bill is the prompt?"
+  href="#ha-calc"
+  more="What the calculator shows"
+>
+  The model is sent <V of="cost.research-claude-sonnet-5.5-hosted-cache-auto.input_tokens" fmt="tokens" /> and writes only <V of="cost.research-claude-sonnet-5.5-hosted-cache-auto.output_tokens" fmt="tokens" />, so even with most of the prompt read from the cache, input is most of the bill.
+</Check>
+
+<Check
+  id="ha10-q2"
+  n={2}
+  input="slider"
+  min={0}
+  max={100}
+  step={1}
+  of="cost.research-claude-sonnet-5.5-hosted-cache-auto-think1000.input_cost_share"
+  fmt="pct"
+  abs={5}
+  q="Now set Thinking to 1,000 tokens a call. What share of the bill is the prompt now?"
+  href="#ha-calc"
+  more="What the calculator shows"
+>
+  Thinking is billed as output at several times the input price, so the
+  prompt's share collapses and the bill rises to
+  <V of="cost.research-claude-sonnet-5.5-hosted-cache-auto-think1000.cost" fmt="usd" />.
+  "Input dominates" holds only for models that answer without reasoning.
+</Check>
+
+<Check
+  id="ha10-q3"
+  n={3}
+  input="number"
+  v="ch10.nocacheOverCache"
+  q="Fixing the test on Sonnet 5.5: how many times as much does it cost with the cache off as with it on?"
+  href="#ha-calc"
+  more="What the calculator shows"
+>
+  Sonnet 5.5 caches from
+  <V of="prices.claude-sonnet-5.5.min_tokens" fmt="int" /> tokens, so even the
+  short prompts of this task are mostly read from the cache: <V of="cost.fix_test-claude-sonnet-5.5-hosted-cache-auto.cost" fmt="usd" /> against <V of="cost.fix_test-claude-sonnet-5.5-hosted-nocache-auto.cost" fmt="usd" />.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- Cost per call: fresh prompt tokens at the input (or write) price, cached ones at ρ times it, output at the output price.
+- Time per call: a fixed overhead, the uncached prompt at the prefill rate, the output at the decode rate.
+- Without reasoning, input dominates; thinking tokens are output, and they flip that.
+- People and slow hardware dominate the time: an approval or a CPU costs more than any token.
+
+<Keep>
+  The same fix takes <V of="cost.fix_test-claude-sonnet-5.5-hosted-cache-auto.elapsed" fmt="ms" /> with nothing to approve and <V of="cost.fix_test-claude-sonnet-5.5-hosted-cache-default.elapsed" fmt="ms" /> when a person approves each command.
+</Keep>
+
+</Remember>

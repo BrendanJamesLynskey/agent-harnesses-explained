@@ -9,12 +9,16 @@
 
 Permission rules ([chapter 5](/learn/05-permissions)) are one checkpoint. A harness has two more. **Hooks** are the user's own code, run by the harness at fixed points: a **pre-tool** hook sees every call before it runs and can block it or rewrite it; a **post-tool** hook sees the result and can add to it. A **sandbox** is a boundary the operating system enforces around the commands the agent runs: whatever the rules allowed, a sandboxed command cannot write outside the workspace or reach the network.
 
+<span id="ha-sandbox-cases" />
+
 The task is the failing test again, after which the scripted model wants to install a coverage plugin (`pip install pytest-cov`), clear the build directory (`rm -rf build`) and clear a cache in the home directory (`rm -rf ~/.cache/pytest`). Three hooks are on offer: `no-rm` blocks any `rm`; `quiet-tests` rewrites `pytest` to `pytest -q`; `lint` appends a lint result after every edit. Follow one call through the checkpoints in the animation, then change the sandbox:
 
 - **No sandbox, no hooks**: every call runs. On a real machine, `rm -rf ~/.cache/pytest` would have deleted part of your home directory.
 - **Workspace sandbox**: writes inside the repository and no network. The install and the home-directory delete are stopped (<V of="hooks.workspace-nohooks.sandboxed" fmt="int" /> calls), while `rm -rf build`, inside the repository, still runs.
 - **Read-only sandbox**: no writes at all; <V of="hooks.read_only-nohooks.sandboxed" fmt="int" /> shell calls are stopped, `rm -rf build` among them. The edit that fixes the test still happens: it is a file tool, not a shell command, and the sandbox wraps the shell only. That is how the public sandboxes work too (see the table below), and why permission rules still matter inside one.
 - **With the hooks**: `no-rm` blocks both deletes before the sandbox is reached (<V of="hooks.workspace-hooks.blocked" fmt="int" /> calls blocked), so in workspace mode the sandbox stops only the install. The rewrite and the lint note change what the model sees, at no risk.
+
+<span id="ha-order" />
 
 Order matters. A hook runs before the tool; the sandbox applies while it runs. A hook can stop a call the sandbox would have allowed (deleting the build directory), and the sandbox stops what no rule or hook thought of (a path outside the workspace, written some other way). Neither replaces the other.
 
@@ -119,3 +123,68 @@ From the [hooks reference](https://code.claude.com/docs/en/hooks) (accessed 2026
 - The threats at the protocol layer, and their defences: [Agent Protocols Explained, protocol security](https://agent-protocols-explained.vercel.app/learn/09-protocol-security).
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha07-q1"
+  n={1}
+  choices={[
+    "No: nothing can be written",
+    "Yes: the edit is a file tool, and the sandbox wraps the shell",
+    "Only if a hook allows it",
+  ]}
+  answer={1}
+  q="Under the read-only sandbox, does the edit that fixes the test still happen?"
+  href="#ha-sandbox-cases"
+  more="Three sandboxes"
+>
+  Yes. The sandbox here, like Claude Code's, covers shell commands only; the
+  edit is a file tool, so it runs. That is why permission rules still matter
+  inside a sandbox.
+</Check>
+
+<Check
+  id="ha07-q2"
+  n={2}
+  input="number"
+  of="hooks.workspace-nohooks.sandboxed"
+  fmt="int"
+  q="With the workspace sandbox and no hooks, how many of the shell calls does the sandbox stop?"
+  href="#ha-sandbox-cases"
+  more="Three sandboxes"
+>
+  The install (it needs the network) and the delete in the home directory
+  (outside the workspace). `rm -rf build` is inside the repository, so it
+  still runs.
+</Check>
+
+<Check
+  id="ha07-q3"
+  n={3}
+  choices={["The hook", "The sandbox", "Both, at the same moment"]}
+  answer={0}
+  q="With the no-rm hook on and the workspace sandbox, which stops rm -rf ~/.cache/pytest?"
+  href="#ha-order"
+  more="Order matters"
+>
+  The hook. A pre-tool hook runs before the tool; the sandbox applies only
+  while it runs, so the call never reaches it. With the hooks the sandbox
+  stops only the install.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- Three checkpoints: permission rules, the user's hooks, and the sandbox the operating system enforces.
+- A pre-tool hook can block or rewrite a call; a post-tool hook can add to its result.
+- Rules and hooks judge what a call says; a sandbox limits what it does, whatever it says.
+- The public sandboxes wrap shell commands only: file tools still need rules.
+
+<Keep>
+  A call runs only if it is allowed, and no hook blocks it, and (for a shell
+  command) it stays inside the sandbox.
+</Keep>
+
+</Remember>

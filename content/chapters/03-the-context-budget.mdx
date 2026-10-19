@@ -9,6 +9,8 @@
 
 Everything the model reads shares one window: the system prompt, the tool definitions, the task, the model's own messages and every tool result. The window also has to leave room for the answer. In the animation the harness keeps <V of="policy.max_output" fmt="int" /> tokens free for the answer, and compacts when the next prompt would pass <V of="policy.context.trigger" fmt="pct" /> of the window.
 
+<span id="ha-strategies" />
+
 The task reads four design notes, each a few hundred tokens of mostly background with a few facts the answer needs (★). With a 3,000-token window and **no** strategy, the run stops at turn <V of="budget.w3000-none.turns" fmt="int" />: the prompt no longer fits. The three strategies keep it going, and lose different things:
 
 - **Truncate** drops the oldest messages until the prompt is back under <V of="policy.context.target" fmt="pct" /> of the window. It is cheap and blind: here it threw away <V of="budget.w3000-truncate.facts_lost_list" fmt="raw" />, the two notes read first, every number the answer needs.
@@ -26,6 +28,8 @@ The windows here are tiny on purpose, so a short task fills them; real models ha
 </Callout>
 
 <Layer kind="maths">
+
+<span id="ha-compact-maths" />
 
 With window $W$, reserve $R$ for the answer and trigger fraction $\theta$, the harness compacts before turn $t$ when $C_t + R > \theta W$. Truncation then removes the oldest messages $m_1, m_2, \dots$ until
 
@@ -81,3 +85,66 @@ Sources accessed 2026-10-16. The window-filling side of the same question, measu
 - What to keep in the window, and how to remember beyond it: [Agent Context Explained, the window is the working memory](https://agent-context-explained.vercel.app/learn/01-the-window-is-the-working-memory), [packing the window](https://agent-context-explained.vercel.app/learn/06-packing-the-window), [compaction and summarisation](https://agent-context-explained.vercel.app/learn/07-compaction-and-summarisation) (what survives a compaction, measured) and [agent memory](https://agent-context-explained.vercel.app/learn/08-agent-memory).
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha03-q1"
+  n={1}
+  choices={["Truncate", "Clip", "Summarise"]}
+  answer={2}
+  q="In the 3,000-token window, which strategy keeps every fact the answer needs?"
+  href="#ha-strategies"
+  more="The three strategies"
+>
+  Summarise. Truncating dropped the two notes read first, and with them every
+  number the answer needs; clipping kept only each note's first lines. Only a
+  summary can carry a fact out of a message it removes.
+</Check>
+
+<Check
+  id="ha03-q2"
+  n={2}
+  input="number"
+  v="ch03.summariseOverTruncate"
+  q="How many times as much does the summarising run cost as the truncating one?"
+  href="#ha-compact-maths"
+  more="What a summary costs"
+>
+  It cost <V of="budget.w3000-summarise.cost" fmt="usd" /> against
+  <V of="budget.w3000-truncate.cost" fmt="usd" />. Each summary is another model
+  call that reads everything it replaces; it pays only if enough later calls
+  re-read the saving.
+</Check>
+
+<Check
+  id="ha03-q3"
+  n={3}
+  input="number"
+  of="budget.w3000-none.turns"
+  fmt="int"
+  q="With the 3,000-token window and no strategy at all, at which turn does the run stop?"
+  href="#ha-strategies"
+  more="The three strategies"
+>
+  The prompt no longer fits after a few notes have been read, and the harness
+  has nothing to drop. The reserve of <V of="policy.max_output" fmt="int" />
+  tokens for the answer counts against the window too.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- Everything shares one window: system prompt, tools, task, messages, tool results, and room for the answer.
+- The harness compacts when the next prompt plus the reserve would pass a trigger fraction of the window.
+- Truncate is cheap and blind; clip keeps the top of each result; summarise keeps facts but costs a model call.
+- The 2025–26 features (tool search, skills, code execution) keep things out of the window in the first place.
+
+<Keep>
+  Compact at <V of="policy.context.trigger" fmt="pct" /> of the window, back
+  down to <V of="policy.context.target" fmt="pct" />: and remember the summary
+  call reads everything it replaces.
+</Keep>
+
+</Remember>
