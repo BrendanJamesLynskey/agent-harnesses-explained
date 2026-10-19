@@ -134,3 +134,37 @@ test("with no JavaScript the question and the answer are in the page", async ({
   );
   await ctx.close();
 });
+
+test("the Agents start page: reading order, prerequisites, glossary", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("[data-track-start] a").click();
+  await expect(page).toHaveURL(/\/agents$/);
+  const order = page.getByTestId("reading-order");
+  await expect(order.locator("li")).toHaveCount(6);
+  await expect(order.locator("[aria-current=page]")).toContainText("Harnesses");
+  await expect(
+    page.getByRole("heading", { name: "What you need first" }),
+  ).toBeVisible();
+  expect(
+    await page.locator("[data-track-glossary] dt a").count(),
+  ).toBeGreaterThanOrEqual(30);
+  await page.locator("[data-definitions-link]").click();
+  await expect(page).toHaveURL(/\/definitions$/);
+});
+
+test("the shared definitions: every term, a formula each, linked from About", async ({
+  page,
+}) => {
+  await page.goto("/about");
+  await expect(page.locator("[data-definitions-link]")).toBeVisible();
+  await page.goto("/definitions");
+  const sections = page.locator("[data-definitions] > section");
+  expect(await sections.count()).toBeGreaterThanOrEqual(9);
+  for (const id of ["goodput", "bubble", "cache-rho", "context-rot"])
+    await expect(page.locator(`#${id} .katex`).first()).toBeVisible();
+  await expect(page.locator("#goodput [data-differs]")).toContainText(
+    "Training",
+  );
+});

@@ -2,6 +2,8 @@
 export const PAGES = [
   "/",
   "/learn",
+  "/agents",
+  "/definitions",
   "/traces",
   "/about",
   "/learn/01-the-agent-loop",

@@ -104,6 +104,11 @@ async function main(): Promise<void> {
       ...SWITCH,
     ]),
     checkPage(base, "/traces", Object.keys(TRACES)),
+    checkPage(base, "/agents", [
+      'data-testid="reading-order"',
+      "data-track-glossary",
+    ]),
+    checkPage(base, "/definitions", ["data-definitions", 'class="katex"']),
     checkPage(base, "/about", [
       ...CREDIT,
       "The engine",
