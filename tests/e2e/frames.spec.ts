@@ -114,7 +114,7 @@ const CASES: {
     path: "/learn/04-prompt-caching",
     id: "cache-widget",
     chapter: "cache",
-    variant: "stable-claude-sonnet-4.6",
+    variant: "stable-claude-sonnet-5.5",
     view: "cache",
     caption: (f, i) => cacheCaption(f, i),
   },
@@ -125,7 +125,7 @@ const CASES: {
     variant: "timestamp-gpt-5-mini",
     view: "cache",
     caption: (f, i) => cacheCaption(f, i),
-    choose: ["time in system prompt", "GPT-5 mini"],
+    choose: ["time in system prompt", "earlier (4.x, GPT-5)", "GPT-5 mini"],
   },
   {
     path: "/learn/05-permissions",
@@ -148,7 +148,7 @@ const CASES: {
     path: "/learn/06-sub-agents",
     id: "subagent-widget",
     chapter: "subagents",
-    variant: "subagent-roomy",
+    variant: "subagent-roomy@claude-sonnet-5.5",
     view: "agents",
     caption: (f) => agentsCaption(f),
   },
@@ -156,10 +156,19 @@ const CASES: {
     path: "/learn/06-sub-agents",
     id: "subagent-widget",
     chapter: "subagents",
-    variant: "inline-tight",
+    variant: "inline-tight@claude-sonnet-5.5",
     view: "agents",
     caption: (f) => agentsCaption(f),
     choose: ["inline", "3,000, summarising"],
+  },
+  {
+    path: "/learn/06-sub-agents",
+    id: "subagent-widget",
+    chapter: "subagents",
+    variant: "inline-roomy",
+    view: "agents",
+    caption: (f) => agentsCaption(f),
+    choose: ["inline", "Sonnet 4.6"],
   },
   {
     path: "/learn/07-hooks-and-sandboxing",
@@ -201,7 +210,7 @@ const CASES: {
     path: "/learn/10-cost-and-latency",
     id: "cost-widget",
     chapter: "cost",
-    variant: "fix_test-claude-sonnet-4.6-hosted-cache-auto",
+    variant: "fix_test-claude-sonnet-5.5-hosted-cache-auto",
     view: "cache",
     caption: (f, i, ev) =>
       costCaption(f, i, ev.filter((e) => e.type === "model_call")[i]!.dur),
@@ -215,7 +224,7 @@ const CASES: {
     caption: (f, i, ev) =>
       costCaption(f, i, ev.filter((e) => e.type === "model_call")[i]!.dur),
     frames: (ev) => cacheFrames(ev as never),
-    choose: ["notes, sub-agent", "GPT-5 mini"],
+    choose: ["notes, sub-agent", "earlier (4.x, GPT-5)", "GPT-5 mini"],
   },
 ];
 
@@ -250,7 +259,10 @@ test("harnesses-widget: page captions are the reference's, across all six runs",
   await expect(fig).toBeVisible({ timeout: ENGINE_TIMEOUT });
   const rows = HARNESSES.map((h) => ({
     label: h.label,
-    frames: permissionFrames(CH.harnesses[h.key].events as never) as Obj[],
+    // the default prices are the current generation's (brief 43): "<harness>@claude-sonnet-5.5"
+    frames: permissionFrames(
+      CH.harnesses[`${h.key}@claude-sonnet-5.5`].events as never,
+    ) as Obj[],
   }));
   const n = rows[0]!.frames.length;
   expect(Number(await fig.getByTestId("scrub").getAttribute("max"))).toBe(

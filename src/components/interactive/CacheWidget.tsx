@@ -17,8 +17,15 @@ import { EngineStatus } from "@/components/agent/EngineStatus";
 import { Segmented, Stat } from "@/components/ui/Controls";
 import { useSvgFont } from "@/components/viz/useSvgFont";
 import { cacheCaption } from "@/lib/agent/captions";
+import {
+  GENERATIONS,
+  PRICE_OF,
+  tierOptions,
+  type Generation,
+  type Tier,
+} from "@/lib/agent/prices";
 import { PRICES, cacheFrames } from "@/lib/engine/vendor/index";
-import { fmtInt, fmtMs, fmtUsd, pct } from "@/lib/format";
+import { fmtInt, fmtMs, fmtUsd, pct, trim } from "@/lib/format";
 import { OKABE_ITO, STATE_COLOUR } from "@/lib/viz/palette";
 
 import { useEngine } from "./useEngine";
@@ -28,13 +35,7 @@ const LAYOUTS = [
   { value: "timestamp", label: "time in system prompt" },
   { value: "reorder_tools", label: "tools reordered" },
 ] as const;
-const PRICE_KEYS = [
-  { value: "claude-sonnet-4.6", label: "Sonnet 4.6" },
-  { value: "claude-haiku-4.5", label: "Haiku 4.5" },
-  { value: "gpt-5-mini", label: "GPT-5 mini" },
-] as const;
 type Layout = (typeof LAYOUTS)[number]["value"];
-type PriceKey = (typeof PRICE_KEYS)[number]["value"];
 
 const SUMMARY: Record<Layout, string> = {
   stable:
@@ -58,7 +59,9 @@ export default function CacheWidget({
   const engine = useEngine("cache");
   const [layout, setLayout] = useState<Layout>("stable");
   const [hover, setHover] = useState<string | null>(null);
-  const [priceKey, setPriceKey] = useState<PriceKey>("claude-sonnet-4.6");
+  const [gen, setGen] = useState<Generation>("current");
+  const [tier, setTier] = useState<Tier>("mid");
+  const priceKey = PRICE_OF[gen][tier];
   const font = useSvgFont(CW);
   const fs = font.fs;
   const key = `${layout}-${priceKey}`;
@@ -251,11 +254,7 @@ export default function CacheWidget({
       <Stat
         label="Minimum"
         value={`${fmtInt(price.min_tokens)} tok`}
-        hint={
-          price.block > 1
-            ? `in ${price.block}-token blocks`
-            : "cacheable prompt"
-        }
+        hint={`${price.block > 1 ? `${price.block}-token blocks; ` : ""}read ρ = ${price.read_multiplier}×, write ${trim(price.cache_write / price.input)}×`}
       />
       <Stat
         label="This call's TTFT"
@@ -287,10 +286,16 @@ export default function CacheWidget({
             onChange={setLayout}
           />
           <Segmented
+            label="Model generation"
+            value={gen}
+            options={GENERATIONS}
+            onChange={setGen}
+          />
+          <Segmented
             label="Prices"
-            value={priceKey}
-            options={PRICE_KEYS}
-            onChange={setPriceKey}
+            value={tier}
+            options={tierOptions(gen)}
+            onChange={setTier}
           />
         </>
       }

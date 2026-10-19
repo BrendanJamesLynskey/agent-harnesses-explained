@@ -7,6 +7,8 @@
  */
 
 export const ACCESSED = "2026-10-07";
+/** The two agent-SDK columns (brief 43) were read on this date. */
+export const ACCESSED_SDK = "2026-10-16";
 
 export const SOURCES = {
   "cc-perm": {
@@ -113,6 +115,46 @@ export const SOURCES = {
     title: "mini-SWE-agent: the mini command",
     url: "https://mini-swe-agent.com/latest/usage/mini/",
   },
+  "sdk-overview": {
+    title: "Claude Agent SDK: overview",
+    url: "https://code.claude.com/docs/en/agent-sdk/overview",
+  },
+  "sdk-perm": {
+    title: "Claude Agent SDK: configure permissions",
+    url: "https://code.claude.com/docs/en/agent-sdk/permissions",
+  },
+  "sdk-secure": {
+    title: "Claude Agent SDK: securely deploying AI agents",
+    url: "https://code.claude.com/docs/en/agent-sdk/secure-deployment",
+  },
+  "sdk-sub": {
+    title: "Claude Agent SDK: subagents",
+    url: "https://code.claude.com/docs/en/agent-sdk/subagents",
+  },
+  "oa-tools": {
+    title: "OpenAI Agents SDK: tools",
+    url: "https://openai.github.io/openai-agents-python/tools/",
+  },
+  "oa-hitl": {
+    title: "OpenAI Agents SDK: human-in-the-loop",
+    url: "https://openai.github.io/openai-agents-python/human_in_the_loop/",
+  },
+  "oa-sandbox": {
+    title: "OpenAI Agents SDK: sandbox agents",
+    url: "https://openai.github.io/openai-agents-python/sandbox_agents/",
+  },
+  "oa-sessions": {
+    title: "OpenAI Agents SDK: sessions",
+    url: "https://openai.github.io/openai-agents-python/sessions/",
+  },
+  "oa-agents": {
+    title: "OpenAI Agents SDK: agents (multi-agent patterns)",
+    url: "https://openai.github.io/openai-agents-python/agents/",
+  },
+  "oa-guardrails": {
+    title: "OpenAI Agents SDK: guardrails",
+    url: "https://openai.github.io/openai-agents-python/guardrails/",
+  },
 } as const;
 
 export type SourceKey = keyof typeof SOURCES;
@@ -127,7 +169,20 @@ export const HARNESSES = [
   { key: "mini-swe-agent", label: "mini-SWE-agent" },
 ] as const;
 
+/**
+ * Two agent SDKs, as matrix columns only (brief 43): libraries you build a harness with, not
+ * harnesses with fixed defaults, so the engine runs no imitation of them.
+ */
+export const SDKS = [
+  { key: "claude-agent-sdk", label: "Claude Agent SDK" },
+  { key: "openai-agents-sdk", label: "OpenAI Agents SDK" },
+] as const;
+
+/** Every matrix column: the six harnesses, then the two SDKs. */
+export const COLUMNS = [...HARNESSES, ...SDKS] as const;
+
 export type HarnessKey = (typeof HARNESSES)[number]["key"];
+export type ColumnKey = (typeof COLUMNS)[number]["key"];
 
 export const CHOICES = [
   "Tool calls",
@@ -141,7 +196,7 @@ export const CHOICES = [
 
 export type Choice = (typeof CHOICES)[number];
 
-export const MATRIX: Record<HarnessKey, Record<Choice, Cell>> = {
+export const MATRIX: Record<ColumnKey, Record<Choice, Cell>> = {
   "claude-code": {
     "Tool calls": {
       text: "Native tool use: named tools such as Read, Edit and Bash",
@@ -310,6 +365,64 @@ export const MATRIX: Record<HarnessKey, Record<Choice, Cell>> = {
     },
     "Imitated as": {
       text: "text parsing (ReAct) · one call per turn · ask every time · no compaction",
+    },
+  },
+  "claude-agent-sdk": {
+    "Tool calls": {
+      text: "Claude Code's built-in tools as a library (read, write and edit files, run commands, search the web), plus your own and MCP tools",
+      src: "sdk-overview",
+    },
+    Approvals: {
+      text: "Hooks, then deny rules, ask rules, the permission mode, allow rules, and last your canUseTool callback; modes default, dontAsk, acceptEdits, bypassPermissions, plan, auto",
+      src: "sdk-perm",
+    },
+    Sandbox: {
+      text: 'Permission rules are "a permission gate, not a sandbox"; the deployment guide layers a sandbox runtime, containers, gVisor or VMs',
+      src: "sdk-secure",
+    },
+    Context: {
+      text: "Claude Code's context management; sessions keep context across exchanges and can be resumed or forked",
+      src: "sdk-overview",
+    },
+    "Sub-agents": {
+      text: "Each runs in its own conversation, starting fresh unless it is a fork; only its final message returns to the parent",
+      src: "sdk-sub",
+    },
+    "Hooks and checks": {
+      text: "Hooks run before every other permission step; a PreToolUse deny applies even in bypassPermissions",
+      src: "sdk-perm",
+    },
+    "Imitated as": {
+      text: "not run: a library, so its defaults are what you configure (closest: the Claude Code column)",
+    },
+  },
+  "openai-agents-sdk": {
+    "Tool calls": {
+      text: "Function tools from Python functions with generated schemas; hosted tools (web search, file search, code interpreter, hosted MCP); tool search over deferred tools",
+      src: "oa-tools",
+    },
+    Approvals: {
+      text: "Opt in per tool with needs_approval; a pending call comes back as an interruption, approved or rejected on the RunState, then the run resumes",
+      src: "oa-hitl",
+    },
+    Sandbox: {
+      text: 'Sandbox agents get a workspace; the Unix-local client "adds no OS-level confinement" on Linux, so use Docker or a hosted sandbox for untrusted commands',
+      src: "oa-sandbox",
+    },
+    Context: {
+      text: "Sessions keep working context across runs; a Responses compaction session compacts automatically",
+      src: "oa-sessions",
+    },
+    "Sub-agents": {
+      text: "Agents as tools (a manager keeps control) or handoffs (the specialist takes over the conversation)",
+      src: "oa-agents",
+    },
+    "Hooks and checks": {
+      text: "Input, output and tool guardrails; a triggered tripwire raises a TripwireTriggered exception for you to handle",
+      src: "oa-guardrails",
+    },
+    "Imitated as": {
+      text: "not run: a library, so its defaults are what you configure",
     },
   },
 };

@@ -21,21 +21,37 @@
   },
   "toolcall": {
     "native": {
-      "scenario": "fix_test_malformed"
+      "scenario": "fix_test_malformed",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
+      }
     },
     "react": {
       "scenario": "fix_test_malformed",
       "policy": {
-        "style": "react"
+        "style": "react",
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
       }
     },
     "native_clean": {
-      "scenario": "fix_test"
+      "scenario": "fix_test",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
+      }
     },
     "react_clean": {
       "scenario": "fix_test",
       "policy": {
-        "style": "react"
+        "style": "react",
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
       }
     }
   },
@@ -46,6 +62,9 @@
         "context": {
           "window": 3000,
           "strategy": "none"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -55,6 +74,9 @@
         "context": {
           "window": 3000,
           "strategy": "truncate"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -64,6 +86,9 @@
         "context": {
           "window": 3000,
           "strategy": "clip"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -73,6 +98,9 @@
         "context": {
           "window": 3000,
           "strategy": "summarise"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -82,6 +110,9 @@
         "context": {
           "window": 4000,
           "strategy": "none"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -91,6 +122,9 @@
         "context": {
           "window": 4000,
           "strategy": "truncate"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -100,6 +134,9 @@
         "context": {
           "window": 4000,
           "strategy": "clip"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -109,6 +146,9 @@
         "context": {
           "window": 4000,
           "strategy": "summarise"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     }
@@ -194,6 +234,87 @@
           "price": "gpt-5-mini"
         }
       }
+    },
+    "stable-claude-sonnet-5.5": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "stable",
+          "price": "claude-sonnet-5.5"
+        }
+      }
+    },
+    "stable-claude-haiku-5.5": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "stable",
+          "price": "claude-haiku-5.5"
+        }
+      }
+    },
+    "stable-gpt-6.1-sol": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "stable",
+          "price": "gpt-6.1-sol"
+        }
+      }
+    },
+    "timestamp-claude-sonnet-5.5": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "timestamp",
+          "price": "claude-sonnet-5.5"
+        }
+      }
+    },
+    "timestamp-claude-haiku-5.5": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "timestamp",
+          "price": "claude-haiku-5.5"
+        }
+      }
+    },
+    "timestamp-gpt-6.1-sol": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "timestamp",
+          "price": "gpt-6.1-sol"
+        }
+      }
+    },
+    "reorder_tools-claude-sonnet-5.5": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "reorder_tools",
+          "price": "claude-sonnet-5.5"
+        }
+      }
+    },
+    "reorder_tools-claude-haiku-5.5": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "reorder_tools",
+          "price": "claude-haiku-5.5"
+        }
+      }
+    },
+    "reorder_tools-gpt-6.1-sol": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "layout": "reorder_tools",
+          "price": "gpt-6.1-sol"
+        }
+      }
     }
   },
   "permissions": {
@@ -221,6 +342,9 @@
             ],
             "deny": []
           }
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -237,6 +361,9 @@
             ],
             "deny": []
           }
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -264,6 +391,9 @@
             ],
             "deny": []
           }
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -280,6 +410,9 @@
             ],
             "deny": []
           }
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -307,6 +440,9 @@
             ],
             "deny": []
           }
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -323,6 +459,9 @@
             ],
             "deny": []
           }
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -350,6 +489,9 @@
             ],
             "deny": []
           }
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -366,16 +508,29 @@
             ],
             "deny": []
           }
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     }
   },
   "subagents": {
     "inline-roomy": {
-      "scenario": "research"
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-4.6"
+        }
+      }
     },
     "subagent-roomy": {
-      "scenario": "research_subagent"
+      "scenario": "research_subagent",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-4.6"
+        }
+      }
     },
     "inline-tight": {
       "scenario": "research",
@@ -383,6 +538,9 @@
         "context": {
           "window": 3000,
           "strategy": "summarise"
+        },
+        "cache": {
+          "price": "claude-sonnet-4.6"
         }
       }
     },
@@ -392,6 +550,49 @@
         "context": {
           "window": 3000,
           "strategy": "summarise"
+        },
+        "cache": {
+          "price": "claude-sonnet-4.6"
+        }
+      }
+    },
+    "inline-roomy@claude-sonnet-5.5": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
+      }
+    },
+    "subagent-roomy@claude-sonnet-5.5": {
+      "scenario": "research_subagent",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
+      }
+    },
+    "inline-tight@claude-sonnet-5.5": {
+      "scenario": "research",
+      "policy": {
+        "context": {
+          "window": 3000,
+          "strategy": "summarise"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
+      }
+    },
+    "subagent-tight@claude-sonnet-5.5": {
+      "scenario": "research_subagent",
+      "policy": {
+        "context": {
+          "window": 3000,
+          "strategy": "summarise"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     }
@@ -430,7 +631,10 @@
             "text": "(lint: ok)",
             "latency_ms": 300
           }
-        ]
+        ],
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
       }
     },
     "off-nohooks": {
@@ -438,6 +642,9 @@
       "policy": {
         "sandbox": {
           "mode": "off"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -474,7 +681,10 @@
             "text": "(lint: ok)",
             "latency_ms": 300
           }
-        ]
+        ],
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
       }
     },
     "workspace-nohooks": {
@@ -482,6 +692,9 @@
       "policy": {
         "sandbox": {
           "mode": "workspace"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -518,7 +731,10 @@
             "text": "(lint: ok)",
             "latency_ms": 300
           }
-        ]
+        ],
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
       }
     },
     "read_only-nohooks": {
@@ -526,6 +742,9 @@
       "policy": {
         "sandbox": {
           "mode": "read_only"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     }
@@ -538,6 +757,9 @@
         "recovery": {
           "retries": 0,
           "loop_action": "stop"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -548,6 +770,9 @@
         "recovery": {
           "retries": 0,
           "loop_action": "nudge"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -558,6 +783,9 @@
         "recovery": {
           "retries": 1,
           "loop_action": "stop"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -568,6 +796,9 @@
         "recovery": {
           "retries": 1,
           "loop_action": "nudge"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -578,6 +809,9 @@
         "recovery": {
           "retries": 2,
           "loop_action": "stop"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -588,6 +822,9 @@
         "recovery": {
           "retries": 2,
           "loop_action": "nudge"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -598,6 +835,9 @@
         "recovery": {
           "retries": 3,
           "loop_action": "stop"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     },
@@ -608,6 +848,9 @@
         "recovery": {
           "retries": 3,
           "loop_action": "nudge"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
         }
       }
     }
@@ -733,6 +976,139 @@
       "policy": {
         "cache": {
           "price": "claude-sonnet-4.6"
+        },
+        "latency": "hosted",
+        "style": "react",
+        "parallel": false,
+        "permissions": {
+          "mode": "ask",
+          "rules": []
+        },
+        "context": {
+          "strategy": "none"
+        }
+      }
+    },
+    "claude-code@claude-sonnet-5.5": {
+      "scenario": "fix_test_guarded",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        },
+        "latency": "hosted",
+        "style": "native",
+        "parallel": true,
+        "permissions": {
+          "mode": "default",
+          "rules": [
+            {
+              "tool": "run_shell",
+              "pattern": "git status",
+              "decision": "allow"
+            }
+          ]
+        },
+        "context": {
+          "strategy": "summarise"
+        }
+      }
+    },
+    "codex-cli@claude-sonnet-5.5": {
+      "scenario": "fix_test_guarded",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        },
+        "latency": "hosted",
+        "style": "native",
+        "parallel": true,
+        "permissions": {
+          "mode": "auto",
+          "rules": []
+        },
+        "sandbox": {
+          "mode": "workspace",
+          "network": false
+        },
+        "context": {
+          "strategy": "summarise"
+        }
+      }
+    },
+    "aider@claude-sonnet-5.5": {
+      "scenario": "fix_test_guarded",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        },
+        "latency": "hosted",
+        "style": "react",
+        "parallel": false,
+        "permissions": {
+          "mode": "default",
+          "rules": [
+            {
+              "tool": "edit_file",
+              "pattern": "*",
+              "decision": "allow"
+            }
+          ]
+        },
+        "context": {
+          "strategy": "summarise"
+        }
+      }
+    },
+    "openhands@claude-sonnet-5.5": {
+      "scenario": "fix_test_guarded",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        },
+        "latency": "hosted",
+        "style": "native",
+        "parallel": true,
+        "permissions": {
+          "mode": "auto",
+          "rules": [
+            {
+              "tool": "run_shell",
+              "pattern": "rm *",
+              "decision": "ask"
+            }
+          ]
+        },
+        "context": {
+          "strategy": "summarise"
+        }
+      }
+    },
+    "swe-agent@claude-sonnet-5.5": {
+      "scenario": "fix_test_guarded",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        },
+        "latency": "hosted",
+        "style": "native",
+        "parallel": false,
+        "permissions": {
+          "mode": "auto",
+          "rules": []
+        },
+        "context": {
+          "strategy": "clip"
+        },
+        "recovery": {
+          "malformed": "feedback"
+        }
+      }
+    },
+    "mini-swe-agent@claude-sonnet-5.5": {
+      "scenario": "fix_test_guarded",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
         },
         "latency": "hosted",
         "style": "react",
@@ -896,6 +1272,265 @@
       "policy": {
         "cache": {
           "price": "claude-sonnet-4.6",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "default"
+        }
+      }
+    },
+    "fix_test-claude-sonnet-5.5-hosted-cache-auto": {
+      "scenario": "fix_test",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research-claude-sonnet-5.5-hosted-cache-auto": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research_subagent-claude-sonnet-5.5-hosted-cache-auto": {
+      "scenario": "research_subagent",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "fix_test-claude-haiku-5.5-hosted-cache-auto": {
+      "scenario": "fix_test",
+      "policy": {
+        "cache": {
+          "price": "claude-haiku-5.5",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research-claude-haiku-5.5-hosted-cache-auto": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-haiku-5.5",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research_subagent-claude-haiku-5.5-hosted-cache-auto": {
+      "scenario": "research_subagent",
+      "policy": {
+        "cache": {
+          "price": "claude-haiku-5.5",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "fix_test-gpt-6.1-sol-hosted-cache-auto": {
+      "scenario": "fix_test",
+      "policy": {
+        "cache": {
+          "price": "gpt-6.1-sol",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research-gpt-6.1-sol-hosted-cache-auto": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "gpt-6.1-sol",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research_subagent-gpt-6.1-sol-hosted-cache-auto": {
+      "scenario": "research_subagent",
+      "policy": {
+        "cache": {
+          "price": "gpt-6.1-sol",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "fix_test-gpt-oss-120b-hosted-cache-auto": {
+      "scenario": "fix_test",
+      "policy": {
+        "cache": {
+          "price": "gpt-oss-120b",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research-gpt-oss-120b-hosted-cache-auto": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "gpt-oss-120b",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research_subagent-gpt-oss-120b-hosted-cache-auto": {
+      "scenario": "research_subagent",
+      "policy": {
+        "cache": {
+          "price": "gpt-oss-120b",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "fix_test-claude-sonnet-5.5-hosted-nocache-auto": {
+      "scenario": "fix_test",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5",
+          "enabled": false
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research-claude-sonnet-5.5-hosted-nocache-auto": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5",
+          "enabled": false
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        }
+      }
+    },
+    "research-claude-sonnet-4.6-hosted-cache-auto-think1000": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-4.6",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        },
+        "thinking": {
+          "tokens": 1000
+        }
+      }
+    },
+    "research-claude-sonnet-4.6-hosted-cache-auto-think4000": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-4.6",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        },
+        "thinking": {
+          "tokens": 4000
+        }
+      }
+    },
+    "research-claude-sonnet-5.5-hosted-cache-auto-think1000": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        },
+        "thinking": {
+          "tokens": 1000
+        }
+      }
+    },
+    "research-claude-sonnet-5.5-hosted-cache-auto-think4000": {
+      "scenario": "research",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5",
+          "enabled": true
+        },
+        "latency": "hosted",
+        "permissions": {
+          "mode": "auto"
+        },
+        "thinking": {
+          "tokens": 4000
+        }
+      }
+    },
+    "fix_test-claude-sonnet-5.5-hosted-cache-default": {
+      "scenario": "fix_test",
+      "policy": {
+        "cache": {
+          "price": "claude-sonnet-5.5",
           "enabled": true
         },
         "latency": "hosted",

@@ -34,7 +34,7 @@ $$
 \text{runs}(c) = \text{allowed}(c) \land \lnot\,\text{blocked}(c) \land \text{inside}(c).
 $$
 
-The first two are the harness's decisions, made before anything runs, from what the call says. The third is the operating system's, made while it runs, from what the call does. A rule or a hook that misreads a command (a shell alias, a script that deletes files) lets it through; the sandbox does not read commands at all. Hooks cost time too: here the three hooks change the run's time from <V of="hooks.workspace-nohooks.elapsed" fmt="ms" /> to <V of="hooks.workspace-hooks.elapsed" fmt="ms" />, because the two blocked deletes never run.
+The first two are the harness's decisions, made before anything runs, from what the call says. The third is the operating system's, made while it runs, from what the call does. A rule or a hook that misreads a command (a shell alias, a script that deletes files) lets it through; the sandbox does not read commands at all. Hooks change the run's time as well: here the three hooks take it from <V of="hooks.workspace-nohooks.elapsed" fmt="ms" /> to <V of="hooks.workspace-hooks.elapsed" fmt="ms" />, because the two blocked deletes never run.
 
 </Layer>
 
@@ -56,6 +56,50 @@ And the sandbox's check on a shell command ([`tools.ts`](https://github.com/Bren
 if ((NETWORK_COMMANDS.includes(cmd) || installs) && !(sandbox.network ?? false))
   return `${cmd}: network access is blocked by the sandbox`;
 ```
+
+**In production.** The same block as a Claude Code `PreToolUse` hook. In `.claude/settings.json`, a matcher picks the Bash tool and an `if` condition narrows it to `rm` commands, so the script only starts when both match:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(rm *)",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/block-rm.sh",
+            "args": []
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The script reads the call as JSON on its standard input and answers with a decision; printing nothing and exiting 0 leaves the call to the normal permission rules:
+
+```bash
+#!/bin/bash
+# .claude/hooks/block-rm.sh: Claude Code passes the call as JSON on stdin
+COMMAND=$(jq -r '.tool_input.command')
+
+if echo "$COMMAND" | grep -q 'rm -rf'; then
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: "Destructive command blocked by hook"
+    }
+  }'
+else
+  exit 0  # no decision: the normal permission flow applies
+fi
+```
+
+From the [hooks reference](https://code.claude.com/docs/en/hooks) (accessed 2026-10-16). The script was run here on two sample inputs (`rm -rf ~/.cache/pytest` is denied; `pytest -q` prints nothing); the settings file needs Claude Code itself to test. A hook that exits with code 2 blocks the call too, with its standard error as the reason.
 
 </Layer>
 

@@ -17,6 +17,14 @@ import { EngineStatus } from "@/components/agent/EngineStatus";
 import { Segmented, Stat } from "@/components/ui/Controls";
 import { costCaption } from "@/lib/agent/captions";
 import { callCosts, timeSplit } from "@/lib/agent/cost";
+import {
+  GENERATIONS,
+  PRICE_OF,
+  THINKING,
+  shortName,
+  type Generation,
+  type Thinking,
+} from "@/lib/agent/prices";
 import type { RunConfig } from "@/lib/engine";
 import { PRICES, cacheFrames } from "@/lib/engine/vendor/index";
 import { fmtInt, fmtMs, fmtUsd, pct } from "@/lib/format";
@@ -29,12 +37,14 @@ const TASKS = [
   { value: "research", label: "read the notes" },
   { value: "research_subagent", label: "notes, sub-agent" },
 ] as const;
-const MODELS = [
-  { value: "claude-sonnet-4.6", label: "Sonnet 4.6" },
-  { value: "claude-haiku-4.5", label: "Haiku 4.5" },
-  { value: "gpt-5-mini", label: "GPT-5 mini" },
-  { value: "local", label: "local" },
-] as const;
+const TIER_KEYS = ["mid", "small", "openai", "oss", "local"] as const;
+type TierKey = (typeof TIER_KEYS)[number];
+/** The price key a model button means in a generation (open weights and local are the same in both). */
+function priceKey(g: Generation, t: TierKey): string {
+  if (t === "oss") return "gpt-oss-120b";
+  if (t === "local") return "local";
+  return PRICE_OF[g][t];
+}
 const SPEEDS = [
   { value: "hosted", label: "hosted API" },
   { value: "local-i7", label: "local CPU" },
@@ -48,7 +58,6 @@ const PERMS = [
   { value: "default", label: "default (asks)" },
 ] as const;
 type Task = (typeof TASKS)[number]["value"];
-type Model = (typeof MODELS)[number]["value"];
 type Speed = (typeof SPEEDS)[number]["value"];
 type Cache = (typeof CACHE)[number]["value"];
 type Perm = (typeof PERMS)[number]["value"];
@@ -57,6 +66,7 @@ const COST_PARTS = [
   { key: "fresh", label: "fresh prompt", colour: OKABE_ITO.sky },
   { key: "hit", label: "cached prompt", colour: OKABE_ITO.blue },
   { key: "out", label: "output", colour: OKABE_ITO.orange },
+  { key: "think", label: "thinking", colour: OKABE_ITO.yellow },
 ] as const;
 const TIME_PARTS = [
   { key: "ttft", label: "to first token", colour: "#737373" },
@@ -123,7 +133,14 @@ export default function CostWidget({
   children?: ReactNode;
 }): JSX.Element {
   const [task, setTask] = useState<Task>("fix_test");
-  const [model, setModel] = useState<Model>("claude-sonnet-4.6");
+  const [gen, setGen] = useState<Generation>("current");
+  const [tier, setTier] = useState<TierKey>("mid");
+  const [think, setThink] = useState<Thinking>("0");
+  const model = priceKey(gen, tier);
+  const models = TIER_KEYS.map((t) => ({
+    value: t,
+    label: shortName(priceKey(gen, t)),
+  }));
   const [speed, setSpeed] = useState<Speed>("hosted");
   const [cache, setCache] = useState<Cache>("on");
   const [perm, setPerm] = useState<Perm>("auto");
@@ -135,9 +152,11 @@ export default function CostWidget({
         cache: { price: model, enabled: cache === "on" },
         latency: speed,
         permissions: { mode: perm },
+        // reasoning tokens per acting call (engine 1.12): billed as output, not kept in context
+        ...(think !== "0" ? { thinking: { tokens: Number(think) } } : {}),
       },
     }),
-    [task, model, speed, cache, perm],
+    [task, model, speed, cache, perm, think],
   );
   const run = useLiveRun(cfg);
   const events = useMemo(
@@ -173,7 +192,7 @@ export default function CostWidget({
   const sum = (k: keyof (typeof calls)[number]) =>
     upto.reduce((s, x) => s + (x[k] as number), 0);
   const maxCost = Math.max(
-    ...calls.map((x) => x.usdFresh + x.usdCached + x.usdOutput),
+    ...calls.map((x) => x.usdFresh + x.usdCached + x.usdOutput + x.usdThinking),
     1e-12,
   );
   const maxDur = Math.max(...calls.map((x) => x.ttft + x.decode), 1);
@@ -182,6 +201,7 @@ export default function CostWidget({
       ["fresh", c.usdFresh],
       ["hit", c.usdCached],
       ["out", c.usdOutput],
+      ["think", c.usdThinking],
     ] as const
   ).reduce((a, b) => (b[1] > a[1] ? b : a))[0];
   const price = PRICES[model]!;
@@ -206,6 +226,7 @@ export default function CostWidget({
                         { key: "fresh", v: x.usdFresh, c: OKABE_ITO.sky },
                         { key: "hit", v: x.usdCached, c: OKABE_ITO.blue },
                         { key: "out", v: x.usdOutput, c: OKABE_ITO.orange },
+                        { key: "think", v: x.usdThinking, c: OKABE_ITO.yellow },
                       ]
                     : [
                         { key: "ttft", v: x.ttft, c: "#737373" },
@@ -249,15 +270,19 @@ export default function CostWidget({
       <Stack
         label="Cost so far"
         hover={hover}
-        parts={COST_PARTS.map((p) => {
-          const v =
-            p.key === "fresh"
-              ? sum("usdFresh")
-              : p.key === "hit"
-                ? sum("usdCached")
-                : sum("usdOutput");
-          return { ...p, v, fmt: fmtUsd(v) };
-        })}
+        parts={COST_PARTS.filter((p) => p.key !== "think" || think !== "0").map(
+          (p) => {
+            const v =
+              p.key === "fresh"
+                ? sum("usdFresh")
+                : p.key === "hit"
+                  ? sum("usdCached")
+                  : p.key === "out"
+                    ? sum("usdOutput")
+                    : sum("usdThinking");
+            return { ...p, v, fmt: fmtUsd(v) };
+          },
+        )}
       />
       <Stack
         label="Where the whole run's time went"
@@ -281,6 +306,8 @@ export default function CostWidget({
         {price.cache_read}, cache write ${price.cache_write}, output $
         {price.output} ({price.label}; list prices accessed {price.accessed},
         illustrative). Hatched bars are a sub-agent&apos;s calls.
+        {think !== "0" &&
+          " Thinking is a fixed, illustrative budget per call, billed at the output price; real models choose how much to think."}
       </p>
     </div>
   );
@@ -297,7 +324,7 @@ export default function CostWidget({
       <Stat
         label="Model calls"
         value={String(end.totals.model_calls)}
-        hint={`${fmtInt(end.totals.output_tokens as number)} output tokens`}
+        hint={`${fmtInt(end.totals.output_tokens as number)} output tokens${end.totals.thinking_tokens ? ` + ${fmtInt(end.totals.thinking_tokens as number)} thinking` : ""}`}
       />
     </div>
   );
@@ -328,10 +355,22 @@ export default function CostWidget({
             onChange={setTask}
           />
           <Segmented
+            label="Model generation"
+            value={gen}
+            options={GENERATIONS}
+            onChange={setGen}
+          />
+          <Segmented
             label="Model price"
-            value={model}
-            options={MODELS}
-            onChange={setModel}
+            value={tier}
+            options={models}
+            onChange={setTier}
+          />
+          <Segmented
+            label="Thinking"
+            value={think}
+            options={THINKING}
+            onChange={setThink}
           />
           <Segmented
             label="Speed"

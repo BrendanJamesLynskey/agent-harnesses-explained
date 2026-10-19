@@ -9,21 +9,32 @@
 
 [Chapter 1](/learn/01-the-agent-loop) showed that an agent re-sends its whole context on every call. Almost all of it is the same as last time: the system prompt, the tool definitions, and every message so far; only the newest messages are new. A provider that keeps the processed prefix of recent prompts (the model's key-value cache for those tokens) can skip recomputing it and charge less for it. That is **prompt caching**, and an agent is the best possible customer for it.
 
-On the Claude API, reading a cached prefix costs a tenth of the input price, and writing one to the 5-minute cache costs 1.25 times the input price; a prefix is only cached if it is at least a model-specific minimum: <V of="prices.claude-sonnet-4.6.min_tokens" fmt="int" /> tokens for Sonnet 4.6, <V of="prices.claude-haiku-4.5.min_tokens" fmt="int" /> for Haiku 4.5. OpenAI's guide describes no cache-write charge for models before GPT-5.6, so none for GPT-5 mini, and cached tokens counted in blocks of <V of="prices.gpt-5-mini.block" fmt="int" /> for those models. (Sources and dates below; the simulator's cache is a simple model of these rules, not either provider's implementation.)
+Three numbers describe a provider's cache, and the rest of this chapter is written in them. A cache **read** costs $\rho$ times the input price, the **read multiplier**. A cache **write** costs $w$ times the input price, the **write premium**. And a prefix is only cached if it is at least $L_{\min}$ tokens long, the **minimum cacheable length**. They differ by model and by generation (the table below):
+
+- On the Claude API the 5-minute write costs $w = 1.25$. Reads cost $\rho = 0.1$ on most models, but <V of="prices.claude-sonnet-5.5.read_multiplier" fmt="num" /> on Sonnet 5.5 and Opus 5.5 and <V of="prices.claude-fable-5.1.read_multiplier" fmt="num" /> on Fable 5.1. The minimum is <V of="prices.claude-sonnet-5.5.min_tokens" fmt="int" /> tokens on the 5.x models, against <V of="prices.claude-sonnet-4.6.min_tokens" fmt="int" /> for Sonnet 4.6 and <V of="prices.claude-haiku-4.5.min_tokens" fmt="int" /> for Haiku 4.5.
+- On OpenAI's API, models before GPT-5.6 charge no write premium ($w = 1$, so none for GPT-5 mini) and count cached tokens in blocks of <V of="prices.gpt-5-mini.block" fmt="int" />. GPT-5.6 and later charge $w = 1.25$, read at $\rho = 0.1$ (<V of="prices.gpt-6.1-sol.read_multiplier" fmt="num" /> on GPT-6.1 Sol), cache from <V of="prices.gpt-6.1-sol.min_tokens" fmt="int" /> tokens and count them exactly.
+
+(Sources and dates below; the simulator's cache is a simple model of these rules, not either provider's implementation.)
 
 Run the research task from [chapter 3](/learn/03-the-context-budget), with a window big enough not to compact, under three prompt layouts:
 
-- **Stable prefix**: the system prompt and the tools never change and messages are only appended. With Sonnet 4.6 prices, <V of="cache.stable-claude-sonnet-4.6.hit" fmt="pct" /> of all prompt tokens are read from the cache and the run costs <V of="cache.stable-claude-sonnet-4.6.cost" fmt="usd" /> instead of <V of="cache.stable-claude-sonnet-4.6.cost_plain" fmt="usd" />, a saving of <V of="cache.stable-claude-sonnet-4.6.saving" fmt="pct" />. It is faster too: cached tokens need no prefill, and the run finishes in <V of="cache.stable-claude-sonnet-4.6.elapsed" fmt="ms" /> against <V of="cache.timestamp-claude-sonnet-4.6.elapsed" fmt="ms" /> without hits.
-- **Current time in the system prompt**: one line that changes every call, a few dozen tokens in. No prompt ever matches the last one past that point, so nothing is read from the cache, and every prompt is still written to it at the premium: the run costs <V of="cache.timestamp-claude-sonnet-4.6.cost" fmt="usd" />, **more** than with no caching at all.
-- **Tools reordered every turn**: the prefix survives only up to the end of the system text. Hits drop to <V of="cache.reorder_tools-claude-sonnet-4.6.hit" fmt="pct" /> and the cost to <V of="cache.reorder_tools-claude-sonnet-4.6.cost" fmt="usd" />.
+- **Stable prefix**: the system prompt and the tools never change and messages are only appended. With Sonnet 5.5 prices, <V of="cache.stable-claude-sonnet-5.5.hit" fmt="pct" /> of all prompt tokens are read from the cache and the run costs <V of="cache.stable-claude-sonnet-5.5.cost" fmt="usd" /> instead of <V of="cache.stable-claude-sonnet-5.5.cost_plain" fmt="usd" />, a saving of <V of="cache.stable-claude-sonnet-5.5.saving" fmt="pct" />. It is faster too: cached tokens need no prefill, and the run finishes in <V of="cache.stable-claude-sonnet-5.5.elapsed" fmt="ms" /> against <V of="cache.timestamp-claude-sonnet-5.5.elapsed" fmt="ms" /> without hits.
+- **Current time in the system prompt**: one line that changes every call, a few dozen tokens in. No prompt ever matches the last one past that point, so nothing is read from the cache, and every prompt is still written to it at the premium: the run costs <V of="cache.timestamp-claude-sonnet-5.5.cost" fmt="usd" />, **more** than with no caching at all (<V of="cache.timestamp-claude-sonnet-5.5.cost_plain" fmt="usd" />).
+- **Tools reordered every turn**: the prefix survives only up to the end of the system text. Hits drop to <V of="cache.reorder_tools-claude-sonnet-5.5.hit" fmt="pct" /> and the cost rises to <V of="cache.reorder_tools-claude-sonnet-5.5.cost" fmt="usd" />.
 
-Switch the prices to Haiku 4.5 and nothing is cached at all: none of this task's prompts reaches its <V of="prices.claude-haiku-4.5.min_tokens" fmt="int" />-token minimum. The rule a harness follows is simple to state: put what never changes first, in a fixed order, and only ever append.
+The other current models tell the same story. Haiku 5.5 caches from the same <V of="prices.claude-haiku-5.5.min_tokens" fmt="int" /> tokens and reads <V of="cache.stable-claude-haiku-5.5.hit" fmt="pct" /> of this task's prompt tokens from the cache. GPT-6.1 Sol charges a write premium too, so its timestamp layout also costs more than no cache (<V of="cache.timestamp-gpt-6.1-sol.cost" fmt="usd" /> against <V of="cache.timestamp-gpt-6.1-sol.cost_plain" fmt="usd" />).
+
+Now switch the generation to **earlier**. On Sonnet 4.6 the stable prefix reads only <V of="cache.stable-claude-sonnet-4.6.hit" fmt="pct" /> of the prompt tokens from the cache, because the first, shorter prompts stay under its <V of="prices.claude-sonnet-4.6.min_tokens" fmt="int" />-token minimum, and saves <V of="cache.stable-claude-sonnet-4.6.saving" fmt="pct" /> rather than <V of="cache.stable-claude-sonnet-5.5.saving" fmt="pct" />: fewer hits, and each read costs twice as much. On Haiku 4.5 nothing is cached at all: none of this task's prompts reaches its <V of="prices.claude-haiku-4.5.min_tokens" fmt="int" />-token minimum. And GPT-5 mini charges no write premium, so there the timestamp layout costs no more than no cache (<V of="cache.timestamp-gpt-5-mini.cost" fmt="usd" /> against <V of="cache.timestamp-gpt-5-mini.cost_plain" fmt="usd" />).
+
+The rule a harness follows is simple to state, and it holds on every row of the table: put what never changes first, in a fixed order, and only ever append.
+
+<PriceTable />
 
 </Layer>
 
 <Callout kind="illustrative">
 
-Prices are list prices copied on 2026-10-07 and change often; the token counts are Qwen2.5's, not these providers' own tokenizers, so a cost here means "this many tokens at that price", not a quote. Latency uses illustrative rates for a hosted model (time to first token = <V of="latency.hosted.overhead_ms" fmt="int" /> ms + uncached tokens at <V of="latency.hosted.prefill_tps" fmt="int" /> tokens/s); the [LLM Inference Explained](https://llm-inference-explained.vercel.app) site shows where such numbers come from.
+Prices are list prices, re-checked on 2026-10-16, and they change often; the token counts are Qwen2.5's, not these providers' own tokenizers, so a cost here means "this many tokens at that price", not a quote. Latency uses illustrative rates for a hosted model (time to first token = <V of="latency.hosted.overhead_ms" fmt="int" /> ms + uncached tokens at <V of="latency.hosted.prefill_tps" fmt="int" /> tokens/s); the [LLM Inference Explained](https://llm-inference-explained.vercel.app) site shows where such numbers come from.
 
 </Callout>
 
@@ -35,13 +46,15 @@ $$
 \text{cost} = \frac{p_r\, h N + p_w (1-h) N + p_o M}{10^6},
 $$
 
-when the prompt is written to the cache, or with the plain input price $p_i$ in place of $p_w$ when it is not. Against no caching, $p_i N$, a prefix written once and read $k$ times pays off when
+when the prompt is written to the cache, or with the plain input price $p_i$ in place of $p_w$ when it is not. Write the prices as multiples of the input price, $p_r = \rho\, p_i$ and $p_w = w\, p_i$. Against no caching, $p_i N$, a prefix written once and read $k$ times pays off when
 
 $$
-p_w + k\, p_r < (1 + k)\, p_i \quad\Longleftrightarrow\quad 1.25 + 0.1k < 1 + k \quad\Longleftrightarrow\quad k \ge 1 ,
+w + k\rho < 1 + k \quad\Longleftrightarrow\quad k > \frac{w - 1}{1 - \rho} .
 $$
 
-with the Claude API's 5-minute multipliers: one re-use repays the write premium, as Anthropic's pricing page says. The timestamp layout is the case $k = 0$: every prompt is written and none is read.
+With the 5-minute write ($w = 1.25$) the bound is about a quarter of a read for any $\rho$ in the table (0.28 at $\rho = 0.1$, 0.26 at $0.05$), so **one re-use repays the write premium** on every model listed, as Anthropic's pricing page says. With the 1-hour write ($w = 2$) it takes two. Where there is no premium ($w = 1$), caching never costs more. The timestamp layout is the case $k = 0$: every prompt is written and none is read, so it costs $w$ times as much as no cache.
+
+Over many re-uses the cost of the cached prefix tends to $\rho$ of its uncached cost: the most a cache can save is $1 - \rho$, 90% at $\rho = 0.1$, 95% at $0.05$ and 97.5% at $0.025$. That is why the same layout saves more on the current models. One more condition applies before any of this: a prompt shorter than $L_{\min}$ is never written, so a short agent loop sees no cache at all on a model with a large minimum. The other chapters and sites that use the cache ([sub-agents](/learn/06-sub-agents), [cost and latency](/learn/10-cost-and-latency), Context's [long context or retrieval?](https://agent-context-explained.vercel.app/learn/09-long-context-or-retrieval) and Orchestration's [multi-agent patterns](https://agent-orchestration-explained.vercel.app/learn/05-multi-agent-patterns)) rest on these three numbers, $\rho$, $w$ and $L_{\min}$.
 
 </Layer>
 
@@ -57,13 +70,40 @@ export function callCost(price: Obj, input: number, cached: number, stored: bool
 }
 ```
 
+**In production.** On the Claude API you mark where the cached prefix ends with `cache_control`. The prefix is cached in the order tools, then system, then messages, so a breakpoint on the last system block caches the tools and the whole system prompt; a second breakpoint on the newest message caches the conversation so far, which is what an agent loop wants (up to four breakpoints per request). With the Python SDK:
+
+```python
+import anthropic
+
+client = anthropic.Anthropic()
+response = client.messages.create(
+    model="claude-sonnet-5-5",
+    max_tokens=1024,
+    tools=TOOLS,  # a fixed list in a fixed order: part of the cached prefix
+    system=[
+        {"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}},
+    ],
+    messages=history[:-1] + [
+        {"role": "user", "content": [
+            {"type": "text", "text": history[-1]["content"], "cache_control": {"type": "ephemeral"}},
+        ]},
+    ],
+)
+u = response.usage
+print(u.cache_creation_input_tokens, u.cache_read_input_tokens, u.input_tokens)
+```
+
+The usage block reports what was written, what was read and what was neither, the three terms of the cost above. (Run here with the `anthropic` Python SDK 1.15.0 against a local stand-in server, which checks the request the SDK builds but not the API's reply; `TOOLS`, `SYSTEM_PROMPT` and `history` are yours.)
+
 </Layer>
 
 ## What breaks a cache
 
 The Claude API builds its cache prefix in the order tools, then system, then messages, and a change at one level invalidates that level and everything after it: changing a tool definition invalidates the whole cache ([prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)). Qwen2.5's template puts the system text first and the tools after it, so in this simulator a rotated tool list keeps the system text cached and loses the rest. Either way, the cures are the same: a fixed tool list in a fixed order, nothing time-varying near the top, history only appended, and compaction ([chapter 3](/learn/03-the-context-budget)) used sparingly, since rewriting the history is itself a cache miss. Claude Code's cost page notes that it uses prompt caching automatically and counts its own compactions as expected rebuilds ([Claude Code, manage costs](https://code.claude.com/docs/en/costs)).
 
-Sources, accessed 2026-10-07: [Claude API pricing](https://platform.claude.com/docs/en/about-claude/pricing) (1.25× write, 0.1× read, 5-minute TTL); [Claude API prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) (minimum lengths, prefix order); [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) and [prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching).
+An MCP server can help: the 2026-07-28 revision of the protocol asks servers to return `tools/list` in a deterministic order "to improve LLM prompt cache hit rates" ([Protocols, gateways and composition](https://agent-protocols-explained.vercel.app/learn/07-gateways-and-composition)), which is the reordering layout above, prevented at the source.
+
+Sources, accessed 2026-10-16: [Claude API pricing](https://platform.claude.com/docs/en/about-claude/pricing) (1.25× write, the read multipliers, the 5-minute TTL, the tokenizer note); [Claude API prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) (minimum lengths, prefix order, four breakpoints); [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) and [prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching) (GPT-5.6 and later: 1.25× write, 0.1× read and 0.05× on GPT-6.1 Sol, a 1,024-token minimum).
 
 <Callout kind="deeper">
 
