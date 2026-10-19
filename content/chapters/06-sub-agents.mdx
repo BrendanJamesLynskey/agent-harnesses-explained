@@ -9,9 +9,15 @@
 
 Everything an agent reads stays in its context, and the whole context is sent again on every later turn ([chapter 1](/learn/01-the-agent-loop)). Reading four long notes to extract five sentences leaves the four notes in the conversation for the rest of the task. A **sub-agent** is the harness's answer: the parent calls a `task` tool with a short prompt; the harness starts a second loop with a **fresh context** (its own system prompt, the tools, the prompt, nothing else); the sub-agent does the reading; and only its final answer comes back to the parent, as that tool call's result.
 
+<span id="ha-peak" />
+
 The animation draws both contexts to one scale. Inline, the parent's context grows with every note it reads and peaks at <V of="subagents.inline-roomy@claude-sonnet-5.5.main.peak" fmt="tokens" />. With a sub-agent, the notes fill the sub-agent's context instead (it peaks at <V of="subagents.subagent-roomy@claude-sonnet-5.5.sub1.peak" fmt="tokens" />), the report it hands back is <V of="subagents.subagent-roomy@claude-sonnet-5.5.summary_tokens" fmt="tokens" />, and the parent never holds more than <V of="subagents.subagent-roomy@claude-sonnet-5.5.main.peak" fmt="tokens" />: about a third of the inline peak. Over the whole run the two agents together send <V of="subagents.subagent-roomy@claude-sonnet-5.5.input_tokens" fmt="tokens" /> to the model, against <V of="subagents.inline-roomy@claude-sonnet-5.5.input_tokens" fmt="tokens" /> inline.
 
+<span id="ha-sub-cost" />
+
 The saving is not free, and here it is not even a saving in money. The sub-agent is another loop, run while the parent waits: the task takes <V of="subagents.subagent-roomy@claude-sonnet-5.5.elapsed" fmt="ms" /> instead of <V of="subagents.inline-roomy@claude-sonnet-5.5.elapsed" fmt="ms" />. And because the inline run re-reads its history from the **prompt cache** ([chapter 4](/learn/04-prompt-caching)) at a fraction $\rho$ of the input price, while the sub-agent's fresh context has to be written to the cache first, the run with a sub-agent costs <V of="subagents.subagent-roomy@claude-sonnet-5.5.cost" fmt="usd" /> against <V of="subagents.inline-roomy@claude-sonnet-5.5.cost" fmt="usd" /> inline at Sonnet 5.5's prices. Fewer tokens, more money: the cache changes which tokens are expensive.
+
+<span id="ha-sub-prices" />
 
 How much more depends on the model, which the **Prices** switch shows. On the earlier Sonnet 4.6 the gap is larger, <V of="subagents.subagent-roomy.cost" fmt="usd" /> against <V of="subagents.inline-roomy.cost" fmt="usd" />, <V of="subagents.diff-roomy.extra_cost" fmt="usd" /> more rather than <V of="subagents.diff-roomy@claude-sonnet-5.5.extra_cost" fmt="usd" />: with its 1,024-token minimum the parent's short prompts in the sub-agent run are never cached, while Sonnet 5.5's 512-token minimum lets them be read from the cache. With no cache the sign flips, and the sub-agent is the cheaper run, because it sends fewer tokens: on Haiku 4.5, whose 4,096-token minimum this task never reaches, it costs <V of="cost.research_subagent-claude-haiku-4.5-hosted-cache-auto.cost" fmt="usd" /> against <V of="cost.research-claude-haiku-4.5-hosted-cache-auto.cost" fmt="usd" /> inline ([chapter 10](/learn/10-cost-and-latency) has both runs). "A sub-agent costs more" is a statement about one cache, not about sub-agents.
 
@@ -71,3 +77,76 @@ All three draw the same line the animation draws: the child's context is its own
 - Agents across a protocol rather than inside one harness: [Agent Protocols Explained, agent to agent (A2A)](https://agent-protocols-explained.vercel.app/learn/08-agent-to-agent).
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha06-q1"
+  n={1}
+  input="slider"
+  min={0}
+  max={100}
+  step={1}
+  of="subagents.diff-roomy@claude-sonnet-5.5.peak_ratio"
+  fmt="pct"
+  abs={5}
+  q="With a sub-agent doing the reading, the parent's peak context is what share of the inline run's peak?"
+  href="#ha-peak"
+  more="Two contexts, one scale"
+>
+  The parent never holds more than
+  <V of="subagents.subagent-roomy@claude-sonnet-5.5.main.peak" fmt="tokens" />,
+  against <V of="subagents.inline-roomy@claude-sonnet-5.5.main.peak" fmt="tokens" /> inline:
+  the notes fill the sub-agent's context, and only its short report comes back.
+</Check>
+
+<Check
+  id="ha06-q2"
+  n={2}
+  choices={[
+    "The sub-agent run: it sends fewer tokens",
+    "The inline run",
+    "They cost the same",
+  ]}
+  answer={1}
+  q="With the cache on, at Sonnet 5.5's prices, which run is cheaper?"
+  href="#ha-sub-cost"
+  more="What the sub-agent costs"
+>
+  Inline: <V of="subagents.inline-roomy@claude-sonnet-5.5.cost" fmt="usd" /> against
+  <V of="subagents.subagent-roomy@claude-sonnet-5.5.cost" fmt="usd" />. The inline run
+  re-reads its history from the cache at a fraction of the price, while the
+  sub-agent's fresh context has to be written first. Fewer tokens, more money.
+</Check>
+
+<Check
+  id="ha06-q3"
+  n={3}
+  choices={["The sub-agent run", "The inline run", "They cost the same"]}
+  answer={0}
+  q="Now on Haiku 4.5, whose cache minimum this task never reaches. Which run is cheaper?"
+  href="#ha-sub-prices"
+  more="It depends on the cache"
+>
+  The sub-agent run, <V of="cost.research_subagent-claude-haiku-4.5-hosted-cache-auto.cost" fmt="usd" /> against
+  <V of="cost.research-claude-haiku-4.5-hosted-cache-auto.cost" fmt="usd" />. With no
+  cache, cost follows the token count, and the sub-agent sends fewer tokens.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- A sub-agent is a second loop with a fresh context; only its final report crosses back to the parent.
+- It buys room: the parent's context stays small and clean while the sub-agent does the reading.
+- It costs time, because the parent waits for the child's loop.
+- Whether it saves money depends on the cache: fewer tokens can cost more when the inline run reads its history from the cache.
+
+<Keep>
+  Here the parent's peak falls by
+  <V of="subagents.diff-roomy@claude-sonnet-5.5.peak_saved" fmt="tokens" />,
+  for <V of="subagents.diff-roomy@claude-sonnet-5.5.extra_time" fmt="ms" />
+  more time.
+</Keep>
+
+</Remember>

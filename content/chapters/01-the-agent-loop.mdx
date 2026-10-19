@@ -9,7 +9,11 @@
 
 A chat model does one thing: given a conversation, it writes the next message. It cannot read a file, run a test or look anything up. The **harness** is the program around it that makes it an agent. It sends the model the conversation, reads what the model wrote, and if the model asked for a tool, runs the tool and appends the result. Then it calls the model again, with the longer conversation. It stops when the model answers without asking for a tool, or when one of the harness's own limits is reached.
 
+<span id="ha-loop" />
+
 The animation runs that loop in the simulator this site is built on, on a small task: a repository whose tests fail because `add()` subtracts. With the scripted policy, the run takes <V of="loop.scripted.turns" fmt="int" /> model calls and <V of="loop.scripted.tool_calls" fmt="int" /> tool calls: list the files, run the tests, read the code, fix the line, run the tests again, then answer.
+
+<span id="ha-whole-context" />
 
 Watch the bar underneath. Every turn, the harness sends the **whole** context again: the system prompt, the tool definitions, the task, and everything said so far. The first call is <V of="loop.scripted.first_input" fmt="tokens" />, of which the tool definitions alone are <V of="loop.scripted.tools_tokens" fmt="tokens" />; by the last it is <V of="loop.scripted.peak" fmt="tokens" />. Over the run the model is sent <V of="loop.scripted.input_tokens" fmt="tokens" /> in total, against <V of="loop.scripted.output_tokens" fmt="tokens" /> it writes. Re-reading the context is where an agent's tokens go, which is why the next chapters are about what goes into it.
 
@@ -30,6 +34,8 @@ Let $S$ be the system prompt, $T$ the tool definitions, $U$ the task, and $a_i$ 
 $$
 C_t = S + T + U + \sum_{i<t} (a_i + r_i).
 $$
+
+<span id="ha-square" />
 
 If every turn adds about the same $\Delta = a + r$, the context grows linearly, $C_t \approx C_1 + (t-1)\Delta$, and the total sent over $n$ turns grows with the square:
 
@@ -81,3 +87,74 @@ The loop itself is the one the ReAct paper made popular: reason, act, observe, r
 - [Introduction to LangGraph](https://brendanjameslynskey.github.io/Introduction_to_LangGraph/#/14): the same loop as a graph, worked through as a ReAct research agent.
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha01-q1"
+  n={1}
+  input="number"
+  v="ch01.inPerOut"
+  q="Over the scripted fix-the-test run, how many tokens is the model sent for every token it writes?"
+  href="#ha-whole-context"
+  more="The whole context, every turn"
+>
+  The model is sent <V of="loop.scripted.input_tokens" fmt="tokens" /> and
+  writes <V of="loop.scripted.output_tokens" fmt="tokens" />. Every call
+  re-sends the whole conversation so far, so reading, not writing, is where an
+  agent's tokens go.
+</Check>
+
+<Check
+  id="ha01-q2"
+  n={2}
+  input="slider"
+  min={0}
+  max={100}
+  step={1}
+  v="ch01.toolsShare"
+  fmt="pct"
+  abs={5}
+  q="What share of the first call's prompt is the four tool definitions?"
+  href="#ha-whole-context"
+  more="The whole context, every turn"
+>
+  The first call is <V of="loop.scripted.first_input" fmt="tokens" />, and the
+  tool definitions alone are <V of="loop.scripted.tools_tokens" fmt="tokens" />.
+  The task itself is a sentence; the harness's description of its tools is
+  most of what the model reads first.
+</Check>
+
+<Check
+  id="ha01-q3"
+  n={3}
+  choices={[
+    "Linearly, like the output",
+    "With the square of the number of turns",
+    "It stays about the same each turn",
+  ]}
+  answer={1}
+  q="If each turn adds about the same number of tokens, how does the total sent over a run grow with its length?"
+  href="#ha-square"
+  more="The maths of the loop"
+>
+  Each turn's prompt is longer than the last by about $\Delta$, so the sum of
+  $n$ prompts is about $n C_1 + \Delta\, n(n-1)/2$: quadratic in $n$, while
+  the output grows only linearly.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- The harness, not the model, runs the tools: it sends the conversation, parses the reply, runs any tool and appends the result.
+- Every call re-sends the whole context: system prompt, tool definitions, task and everything said so far.
+- So the input a run sends grows with the square of its turns, and the output only linearly.
+- A run stops when the model answers without a tool call, or when one of the harness's own limits is reached.
+
+<Keep>
+  On the scripted run the model reads about <V v="ch01.inPerOut" fmt="num" />
+  tokens for every token it writes.
+</Keep>
+
+</Remember>

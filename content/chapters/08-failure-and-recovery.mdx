@@ -13,13 +13,19 @@ Tools fail. A network call times out, a test runner crashes, a file is locked. A
 2. When the budget is spent, **feed the error back** to the model as the tool's result, and let it decide. The scripted model here does what models often do: it tries the same call again.
 3. **Detect loops**: three identical calls in a row are not progress. The harness either **stops** the run or **nudges** the model with a message telling it to try something else.
 
+<span id="ha-retries" />
+
 Seed 0, with no retries, shows the failure: the shell fails twice in a row, the model asks for the same `pytest` a third time, and loop detection stops the run after <V of="recovery.r0-stop.elapsed" fmt="ms" />, with the bug unfixed. One retry is not enough for this seed either. With two, the retries absorb every failure and the run finishes in <V of="recovery.r2-stop.elapsed" fmt="ms" /> after <V of="recovery.r2-stop.retries" fmt="int" /> retries: slower than a lucky run, because waiting is the price of a retry.
+
+<span id="ha-nudge" />
 
 Now set the budget to 0 and choose **nudge**. The run "finishes": the nudge moves the model on, it edits the file, the last test run fails again, and the model reports that all the tests pass. The run's status is done; the tests never passed. A harness that counts "the model said it was done" as success will report this run as a success. Counting only runs whose last test run passed tells the truth, and that is what the chart below does.
 
 </Layer>
 
 <SweepChart />
+
+<span id="ha-sweep" />
 
 Over 100 seeded runs per budget, with the shell failing <V of="recovery.model.p" fmt="pct" /> of attempts: with no retries, <V of="sweeps.recovery.stop.0.success" fmt="pct" /> of runs finish; one retry lifts that to <V of="sweeps.recovery.stop.1.success" fmt="pct" />, and two to <V of="sweeps.recovery.stop.2.success" fmt="pct" />. With nudges instead of stops, <V of="sweeps.recovery.nudge.0.success" fmt="pct" /> of the no-retry runs finish, but only <V of="sweeps.recovery.nudge.0.verified_rate" fmt="pct" /> with their tests passing. Past two retries, a bigger budget buys nothing here and costs time: the mean run takes <V of="sweeps.recovery.stop.2.mean_elapsed" fmt="ms" /> with two retries and <V of="sweeps.recovery.stop.4.mean_elapsed" fmt="ms" /> with four.
 
@@ -30,6 +36,8 @@ The shell's failure rate (30% of attempts, independent, seeded), the back-off sc
 </Callout>
 
 <Layer kind="maths">
+
+<span id="ha-retry-maths" />
 
 If each attempt fails independently with probability $p$, a call with a budget of $r$ retries fails only when all $r+1$ attempts do:
 
@@ -83,3 +91,70 @@ return events[events.length - 1]!.status === "done" && lastOk;
 - Next in the track: [Agent Orchestration Explained, reliability](https://agent-orchestration-explained.vercel.app/learn/07-reliability) takes the same retry maths from one call to a whole workflow, and adds the errors no retry sees (a step that succeeds with a wrong answer) and the verifiers that catch them; [durable execution](https://agent-orchestration-explained.vercel.app/learn/04-durable-execution) is how a failed run resumes. The false "all tests pass" above is what [Agent Evals Explained, trajectories](https://agent-evals-explained.vercel.app/learn/07-trajectories) grades a run for.
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha08-q1"
+  n={1}
+  input="number"
+  of="recovery.model.2.call"
+  tol={0.01}
+  q="Each attempt fails with probability 0.3. With a budget of 2 retries, what is the chance one call succeeds? (to three decimals)"
+  href="#ha-retry-maths"
+  more="The retry maths"
+>
+  It fails only if all three attempts fail: $1 - 0.3^3$. Each retry multiplies
+  the failure probability by $p$ again.
+</Check>
+
+<Check
+  id="ha08-q2"
+  n={2}
+  input="slider"
+  min={0}
+  max={100}
+  step={1}
+  of="sweeps.recovery.nudge.0.verified_rate"
+  fmt="pct"
+  abs={3}
+  q="With no retries and nudges instead of stops, every run 'finishes'. What share of the 100 runs end with their tests passing?"
+  href="#ha-sweep"
+  more="The seeded sweep"
+>
+  Fewer than finish: the nudge moves the model on, and some runs end with a
+  failing test and a claim that all is well. Count only runs whose last test
+  passed, not runs the model said were done.
+</Check>
+
+<Check
+  id="ha08-q3"
+  n={3}
+  input="number"
+  of="recovery.model.4.backoff"
+  fmt="ms"
+  q="Back-off starts at 500 ms and doubles. How long does a call that uses a budget of 4 retries wait in all, in seconds?"
+  href="#ha-retry-maths"
+  more="The retry maths"
+>
+  $b(f^r - 1)/(f - 1)$ = 500 ms × (16 − 1): the waits double each time, so the
+  last one is as long as all the others together. Past two retries, a bigger
+  budget bought this task nothing.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- Three levels: retry with exponential back-off, then feed the error back to the model, then detect loops.
+- With r retries a call fails with probability p to the power r + 1.
+- A run the model calls done is not a run whose tests passed: verify, do not trust the claim.
+- Retries cost time, and failures in the real world are often correlated, which is what a budget protects against.
+
+<Keep>
+  At p = <V of="recovery.model.p" fmt="num" />, two retries took the runs that
+  finish from <V of="sweeps.recovery.stop.0.success" fmt="pct" /> to
+  <V of="sweeps.recovery.stop.2.success" fmt="pct" />.
+</Keep>
+
+</Remember>

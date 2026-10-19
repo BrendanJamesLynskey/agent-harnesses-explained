@@ -9,7 +9,11 @@
 
 A harness that runs whatever the model asks for is as trustworthy as the model. Most harnesses therefore check every tool call against **rules** before running it. A rule names a tool and a pattern for its argument (a path, or a command line) and says **allow**, **ask** or **deny**. On an ask, the run stops until a person answers.
 
+<span id="ha-rule-order" />
+
 The simulator checks deny rules first, then the mode, then ask rules, then allow rules, then the mode's default; so an allow rule can never carve an exception out of a deny rule. That is the order Claude Code documents: "Rules are evaluated in order: deny, then ask, then allow. The first match in that order determines the outcome" ([Claude Code, permissions](https://code.claude.com/docs/en/permissions), accessed 2026-10-07).
+
+<span id="ha-modes" />
 
 The task is the failing test again, plus some tidying the scripted model decides to do: `rm -rf build`, then `git status`. Two rules are on offer: deny `rm *`, and allow `pytest*` without asking. Then four modes:
 
@@ -29,6 +33,8 @@ The simulated human answers in a time drawn uniformly from 3 to 9 seconds (seede
 </Callout>
 
 <Layer kind="maths">
+
+<span id="ha-wait-maths" />
 
 Splitting a run's time $T$ into the model's calls, the tools' runs and the waits for a person,
 
@@ -71,3 +77,70 @@ The two take different routes to the same end. Rules decide per call; a **sandbo
 - A server asking the user, over the protocol: [Agent Protocols Explained, sampling and elicitation](https://agent-protocols-explained.vercel.app/learn/05-sampling-and-elicitation) and [protocol security](https://agent-protocols-explained.vercel.app/learn/09-protocol-security).
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha05-q1"
+  n={1}
+  choices={["It runs", "It asks the human", "It is denied"]}
+  answer={2}
+  q="One rule allows rm -rf build, another denies rm *. Both match the call. What happens?"
+  href="#ha-rule-order"
+  more="The order rules are checked in"
+>
+  Denied. Deny rules are checked first, then the mode, then ask and allow
+  rules, so an allow rule can never carve an exception out of a deny rule.
+  Claude Code documents the same order.
+</Check>
+
+<Check
+  id="ha05-q2"
+  n={2}
+  input="number"
+  of="permissions.ask-rule.human_prompts"
+  fmt="int"
+  q="In the 'ask every time' mode, how many questions does the human answer on this task?"
+  href="#ha-modes"
+  more="The four modes"
+>
+  Every call asks, reads included. The run takes
+  <V of="permissions.ask-rule.elapsed" fmt="ms" />, against
+  <V of="permissions.auto-rule.elapsed" fmt="ms" /> in auto mode.
+</Check>
+
+<Check
+  id="ha05-q3"
+  n={3}
+  input="slider"
+  min={0}
+  max={100}
+  step={1}
+  v="ch05.askWaitShare"
+  fmt="pct"
+  abs={5}
+  q="In that mode, what share of the run's time is waiting for the human?"
+  href="#ha-wait-maths"
+  more="Where the time goes"
+>
+  Of <V of="permissions.ask-rule.elapsed" fmt="ms" />, the waits are
+  <V of="permissions.ask-rule.human_wait" fmt="ms" />. The model and the tools
+  hardly change between modes; the number of questions decides the time.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- A rule names a tool and an argument pattern and says allow, ask or deny.
+- Deny first, then the mode, then ask, then allow: an allow can never override a deny.
+- Each question costs the person's attention and the run's time; precise allow rules for safe, frequent calls remove most of them.
+- The harness, not the model, should decide when a task is done: the model claims success even when its edit was refused.
+
+<Keep>
+  Asking costs about the number of questions times the mean wait: here
+  <V of="permissions.ask-rule.human_prompts" fmt="int" /> questions added
+  <V of="permissions.ask-rule.human_wait" fmt="ms" />.
+</Keep>
+
+</Remember>

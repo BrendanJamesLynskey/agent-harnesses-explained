@@ -16,6 +16,8 @@ Three numbers describe a provider's cache, and the rest of this chapter is writt
 
 (Sources and dates below; the simulator's cache is a simple model of these rules, not either provider's implementation.)
 
+<span id="ha-layouts" />
+
 Run the research task from [chapter 3](/learn/03-the-context-budget), with a window big enough not to compact, under three prompt layouts:
 
 - **Stable prefix**: the system prompt and the tools never change and messages are only appended. With Sonnet 5.5 prices, <V of="cache.stable-claude-sonnet-5.5.hit" fmt="pct" /> of all prompt tokens are read from the cache and the run costs <V of="cache.stable-claude-sonnet-5.5.cost" fmt="usd" /> instead of <V of="cache.stable-claude-sonnet-5.5.cost_plain" fmt="usd" />, a saving of <V of="cache.stable-claude-sonnet-5.5.saving" fmt="pct" />. It is faster too: cached tokens need no prefill, and the run finishes in <V of="cache.stable-claude-sonnet-5.5.elapsed" fmt="ms" /> against <V of="cache.timestamp-claude-sonnet-5.5.elapsed" fmt="ms" /> without hits.
@@ -40,6 +42,8 @@ Prices are list prices, re-checked on 2026-10-16, and they change often; the tok
 
 <Layer kind="maths">
 
+<span id="ha-cache-maths" />
+
 A call with an $N$-token prompt, of which a fraction $h$ is read from the cache, and $M$ output tokens costs, at prices per million tokens $p_r$ (read), $p_w$ (write) and $p_o$ (output),
 
 $$
@@ -53,6 +57,8 @@ w + k\rho < 1 + k \quad\Longleftrightarrow\quad k > \frac{w - 1}{1 - \rho} .
 $$
 
 With the 5-minute write ($w = 1.25$) the bound is about a quarter of a read for any $\rho$ in the table (0.28 at $\rho = 0.1$, 0.26 at $0.05$), so **one re-use repays the write premium** on every model listed, as Anthropic's pricing page says. With the 1-hour write ($w = 2$) it takes two. Where there is no premium ($w = 1$), caching never costs more. The timestamp layout is the case $k = 0$: every prompt is written and none is read, so it costs $w$ times as much as no cache.
+
+<span id="ha-max-saving" />
 
 Over many re-uses the cost of the cached prefix tends to $\rho$ of its uncached cost: the most a cache can save is $1 - \rho$, 90% at $\rho = 0.1$, 95% at $0.05$ and 97.5% at $0.025$. That is why the same layout saves more on the current models. One more condition applies before any of this: a prompt shorter than $L_{\min}$ is never written, so a short agent loop sees no cache at all on a model with a large minimum. The other chapters and sites that use the cache ([sub-agents](/learn/06-sub-agents), [cost and latency](/learn/10-cost-and-latency), Context's [long context or retrieval?](https://agent-context-explained.vercel.app/learn/09-long-context-or-retrieval) and Orchestration's [multi-agent patterns](https://agent-orchestration-explained.vercel.app/learn/05-multi-agent-patterns)) rest on these three numbers, $\rho$, $w$ and $L_{\min}$.
 
@@ -112,3 +118,69 @@ Sources, accessed 2026-10-16: [Claude API pricing](https://platform.claude.com/d
 - A cached long prompt against retrieval: [Agent Context Explained, long context or retrieval?](https://agent-context-explained.vercel.app/learn/09-long-context-or-retrieval).
 
 </Callout>
+
+<CheckYourself>
+
+<Check
+  id="ha04-q1"
+  n={1}
+  input="number"
+  v="ch04.timestampOverPlain"
+  q="Put the current time in the system prompt. On Sonnet 5.5, how many times the cost of no caching at all does the run cost?"
+  href="#ha-layouts"
+  more="Three prompt layouts"
+>
+  More than 1: nothing is ever read from the cache, and every prompt is still
+  written to it at the premium, <V of="cache.timestamp-claude-sonnet-5.5.cost" fmt="usd" /> against
+  <V of="cache.timestamp-claude-sonnet-5.5.cost_plain" fmt="usd" />.
+</Check>
+
+<Check
+  id="ha04-q2"
+  n={2}
+  input="number"
+  v="ch04.breakEven.sonnet55"
+  q="With the 5-minute write on Sonnet 5.5, how many re-uses k of a cached prefix repay the write premium? (k > (w − 1)/(1 − ρ))"
+  href="#ha-cache-maths"
+  more="When a cache write pays"
+>
+  The write costs $w = 1.25$ times the input price and a read
+  $\rho$ = <V of="prices.claude-sonnet-5.5.read_multiplier" fmt="num" /> times,
+  so the bound is about a quarter: one re-use repays the write.
+</Check>
+
+<Check
+  id="ha04-q3"
+  n={3}
+  input="slider"
+  min={0}
+  max={100}
+  step={1}
+  of="cache.stable-claude-haiku-4.5.hit"
+  fmt="pct"
+  abs={5}
+  q="Switch to Haiku 4.5 with the stable prefix. What share of the research task's prompt tokens is read from the cache?"
+  href="#ha-layouts"
+  more="Three prompt layouts"
+>
+  None: Haiku 4.5 caches only prompts of at least
+  <V of="prices.claude-haiku-4.5.min_tokens" fmt="tokens" />, and no prompt in
+  this task is that long. A good layout cannot help a prompt under the minimum.
+</Check>
+
+</CheckYourself>
+
+<Remember>
+
+- Three numbers describe a cache: the read multiplier ρ, the write premium w, and the minimum cacheable length.
+- Put what never changes first, in a fixed order, and only ever append.
+- One changing line near the top (a timestamp) makes caching cost more than no cache, wherever w is above 1.
+- The most a cache can save on the prefix is 1 − ρ; a prompt under the minimum is never cached.
+
+<Keep>
+  With the stable prefix on Sonnet 5.5 the run saves
+  <V of="cache.stable-claude-sonnet-5.5.saving" fmt="pct" />; at most a cache
+  saves <V v="ch04.maxSaving.sonnet55" fmt="pct" /> there.
+</Keep>
+
+</Remember>
