@@ -1,11 +1,28 @@
 {
   "recovery": {
     "scenario": "fix_test_flaky",
-    "budgets": [0, 1, 2, 3, 4],
+    "budgets": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
     "seeds": 100,
     "policies": {
-      "stop": null,
-      "nudge": { "recovery": { "loop_action": "nudge" } }
+      "stop": {
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
+      },
+      "nudge": {
+        "recovery": {
+          "loop_action": "nudge"
+        },
+        "cache": {
+          "price": "claude-sonnet-5.5"
+        }
+      }
     }
   }
 }

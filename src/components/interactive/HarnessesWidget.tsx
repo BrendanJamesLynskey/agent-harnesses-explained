@@ -49,8 +49,8 @@ function short(f: Obj): string {
 
 // the same six runs priced on two generations (chapter_configs.json: "<harness>@<price>")
 const PRICES_AT = [
-  { value: "", label: "Sonnet 4.6" },
   { value: "@claude-sonnet-5.5", label: "Sonnet 5.5" },
+  { value: "", label: "Sonnet 4.6" },
 ] as const;
 type At = (typeof PRICES_AT)[number]["value"];
 const PRICE_LABEL: Record<At, string> = {
@@ -65,7 +65,7 @@ export default function HarnessesWidget({
 }): JSX.Element {
   const engine = useEngine("harnesses");
   const [focus, setFocus] = useState<Key>("claude-code");
-  const [at, setAt] = useState<At>("");
+  const [at, setAt] = useState<At>("@claude-sonnet-5.5");
   const [hover, setHover] = useState<string | null>(null);
   const rows = useMemo(
     () =>

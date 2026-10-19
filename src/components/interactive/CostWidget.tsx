@@ -133,7 +133,7 @@ export default function CostWidget({
   children?: ReactNode;
 }): JSX.Element {
   const [task, setTask] = useState<Task>("fix_test");
-  const [gen, setGen] = useState<Generation>("earlier");
+  const [gen, setGen] = useState<Generation>("current");
   const [tier, setTier] = useState<TierKey>("mid");
   const [think, setThink] = useState<Thinking>("0");
   const model = priceKey(gen, tier);

@@ -77,7 +77,7 @@ describe("price switch (brief 43)", () => {
     expect(PRICES["claude-sonnet-4.6"]!.min_tokens).toBe(1024);
   });
   it("labels each generation's buttons with that generation's models", () => {
-    expect(GENERATIONS.map((g) => g.value)).toEqual(["earlier", "current"]);
+    expect(GENERATIONS.map((g) => g.value)).toEqual(["current", "earlier"]);
     expect(tierOptions("earlier").map((o) => o.label)).toEqual([
       "Sonnet 4.6",
       "Haiku 4.5",

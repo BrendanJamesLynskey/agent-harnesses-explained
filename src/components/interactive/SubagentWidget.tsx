@@ -38,8 +38,8 @@ const WINDOWS = [
   { value: "tight", label: "3,000, summarising" },
 ] as const;
 const PRICES_AT = [
-  { value: "", label: "Sonnet 4.6" },
   { value: "@claude-sonnet-5.5", label: "Sonnet 5.5" },
+  { value: "", label: "Sonnet 4.6" },
 ] as const;
 type Setup = (typeof SETUPS)[number]["value"];
 type At = (typeof PRICES_AT)[number]["value"];
@@ -94,7 +94,7 @@ export default function SubagentWidget({
   const engine = useEngine("subagents");
   const [setup, setSetup] = useState<Setup>("subagent");
   const [win, setWin] = useState<Win>("roomy");
-  const [at, setAt] = useState<At>("");
+  const [at, setAt] = useState<At>("@claude-sonnet-5.5");
   const [hover, setHover] = useState<string | null>(null);
   // the same runs priced on two generations (chapter_configs.json: "<setup>-<window>@<price>")
   const key = `${setup}-${win}${at}`;

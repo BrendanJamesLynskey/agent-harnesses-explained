@@ -7,8 +7,8 @@
  * only says which entry each switch position means.
  */
 export const GENERATIONS = [
-  { value: "earlier", label: "earlier (4.x, GPT-5)" },
   { value: "current", label: "current (5.x, GPT-6)" },
+  { value: "earlier", label: "earlier (4.x, GPT-5)" },
 ] as const;
 export type Generation = (typeof GENERATIONS)[number]["value"];
 

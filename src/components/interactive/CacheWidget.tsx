@@ -59,7 +59,7 @@ export default function CacheWidget({
   const engine = useEngine("cache");
   const [layout, setLayout] = useState<Layout>("stable");
   const [hover, setHover] = useState<string | null>(null);
-  const [gen, setGen] = useState<Generation>("earlier");
+  const [gen, setGen] = useState<Generation>("current");
   const [tier, setTier] = useState<Tier>("mid");
   const priceKey = PRICE_OF[gen][tier];
   const font = useSvgFont(CW);
